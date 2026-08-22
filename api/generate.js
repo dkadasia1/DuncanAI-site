@@ -57,11 +57,15 @@ export default async function handler(req, res) {
       }
     );
 
-    if (!response.ok) {
-      return res.status(500).json({
-        error: "Image generation failed. Please try again later."
-      });
-    }
+if (!response.ok) {
+  const errorText = await response.text();
+
+  console.error("OpenAI API error:", errorText);
+
+  return res.status(response.status).json({
+    error: `OpenAI API error: ${errorText}`
+  });
+}
 
     const data = await response.json();
 
