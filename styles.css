@@ -1,14 +1,458 @@
+:root {
+  --bg: #070b14;
+  --panel: #101827;
+  --panel2: #141f32;
+  --text: #f7f9fc;
+  --muted: #aab5c8;
+  --line: rgba(255,255,255,.10);
+  --accent: #8b5cf6;
+  --accent2: #22d3ee;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(
+      circle at 75% 10%,
+      rgba(139,92,246,.16),
+      transparent 28%
+    ),
+    var(--bg);
+  color: var(--text);
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+
 /* =========================================
-   DuncanAI Image → Video
+   NAVIGATION
+   ========================================= */
+
+.nav {
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6%;
+  border-bottom: 1px solid var(--line);
+  background: rgba(7,11,20,.75);
+  backdrop-filter: blur(16px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.brand img {
+  width: 42px !important;
+  height: 42px !important;
+  max-width: 42px !important;
+  max-height: 42px !important;
+  object-fit: contain;
+  display: block;
+}
+
+nav {
+  display: flex;
+  gap: 28px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+nav a:hover {
+  color: white;
+}
+
+.nav-button,
+.primary {
+  background:
+    linear-gradient(
+      135deg,
+      var(--accent),
+      #6366f1
+    );
+  color: white;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-weight: 700;
+  border: 0;
+  cursor: pointer;
+  display: inline-block;
+}
+
+
+/* =========================================
+   HERO
+   ========================================= */
+
+.hero {
+  max-width: 1200px;
+  margin: auto;
+  padding: 100px 6% 90px;
+  display: grid;
+  grid-template-columns: 1.05fr .95fr;
+  gap: 60px;
+  align-items: center;
+}
+
+.eyebrow {
+  color: #a78bfa;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .16em;
+}
+
+h1 {
+  font-size: clamp(48px,7vw,82px);
+  line-height: .98;
+  letter-spacing: -.055em;
+  margin: 18px 0 24px;
+}
+
+h1 span {
+  background:
+    linear-gradient(
+      90deg,
+      #a78bfa,
+      #67e8f9
+    );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hero-copy p,
+.section-heading p {
+  color: var(--muted);
+  line-height: 1.75;
+  font-size: 17px;
+  max-width: 650px;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.secondary {
+  padding: 12px 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: #dbe3f0;
+}
+
+
+/* =========================================
+   HERO CARD
+   ========================================= */
+
+.hero-card {
+  min-height: 430px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 28px;
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(
+      145deg,
+      #121b2c,
+      #090e18
+    );
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(2px);
+  opacity: .65;
+}
+
+.orb-one {
+  width: 260px;
+  height: 260px;
+  background: #7c3aed;
+  left: -70px;
+  top: -60px;
+}
+
+.orb-two {
+  width: 240px;
+  height: 240px;
+  background: #0891b2;
+  right: -80px;
+  bottom: -80px;
+}
+
+.hero-panel {
+  position: relative;
+  width: 76%;
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 20px;
+  background: rgba(10,15,27,.78);
+  box-shadow: 0 30px 80px rgba(0,0,0,.35);
+}
+
+.panel-top {
+  display: flex;
+  justify-content: space-between;
+  color: #cbd5e1;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.preview {
+  height: 210px;
+  border-radius: 14px;
+  background:
+    linear-gradient(
+      145deg,
+      #312e81 0%,
+      #0f766e 45%,
+      #f59e0b 100%
+    );
+  position: relative;
+  overflow: hidden;
+}
+
+.preview:after {
+  content: "";
+  position: absolute;
+  inset: 35% -10% -30%;
+  background: rgba(0,0,0,.42);
+  transform: skewY(-8deg);
+}
+
+.prompt-line {
+  font-size: 12px;
+  color: #b9c4d6;
+  padding: 12px 2px 8px;
+}
+
+.progress {
+  height: 4px;
+  background: #263247;
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.progress span {
+  display: block;
+  width: 64%;
+  height: 100%;
+  background:
+    linear-gradient(
+      90deg,
+      #8b5cf6,
+      #22d3ee
+    );
+}
+
+
+/* =========================================
+   STUDIO
+   ========================================= */
+
+.studio,
+.steps {
+  max-width: 1200px;
+  margin: auto;
+  padding: 70px 6%;
+}
+
+.section-heading {
+  text-align: center;
+}
+
+.section-heading p {
+  margin: 12px auto;
+}
+
+h2 {
+  font-size: clamp(34px,4vw,52px);
+  letter-spacing: -.04em;
+  margin: 12px 0;
+}
+
+
+/* =========================================
+   TOOL CARDS
+   ========================================= */
+
+.tool-grid {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 16px;
+  margin-top: 42px;
+}
+
+.tool-card {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(20,31,50,.9),
+      rgba(12,18,30,.9)
+    );
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 24px;
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+}
+
+.icon {
+  font-size: 30px;
+}
+
+.tool-card h3 {
+  margin: 20px 0 8px;
+}
+
+.tool-card p {
+  color: var(--muted);
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.tool-button {
+  margin-top: auto;
+  border: 0;
+  background: transparent;
+  color: #c4b5fd;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+  padding: 10px 0 0;
+}
+
+
+/* =========================================
+   CREATOR
+   ========================================= */
+
+.creator {
+  margin-top: 30px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 28px;
+  background: rgba(13,20,33,.9);
+}
+
+.creator-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.close {
+  border: 0;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 28px;
+  cursor: pointer;
+}
+
+.creator label {
+  display: block;
+  margin: 24px 0 10px;
+  color: #dbe4f0;
+  font-weight: 700;
+}
+
+textarea {
+  width: 100%;
+  min-height: 130px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #080e19;
+  color: white;
+  padding: 16px;
+  font: inherit;
+  outline: none;
+}
+
+textarea:focus {
+  border-color: #7c3aed;
+}
+
+.creator-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+select {
+  background: #080e19;
+  color: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.result {
+  min-height: 160px;
+  margin-top: 20px;
+  border: 1px dashed rgba(255,255,255,.14);
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  color: #75839a;
+  text-align: center;
+  padding: 20px;
+}
+
+.result.active {
+  color: #dbeafe;
+}
+
+.hidden {
+  display: none;
+}
+
+
+/* =========================================
+   IMAGE → VIDEO
    ========================================= */
 
 .upload-box {
+  width: 100%;
   margin-top: 24px;
   padding: 28px;
-  border: 2px dashed rgba(255, 255, 255, 0.2);
+  border: 2px dashed rgba(255,255,255,.2);
   border-radius: 18px;
   text-align: center;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255,255,255,.03);
 }
 
 .upload-box input[type="file"] {
@@ -21,18 +465,20 @@
   border-radius: 12px;
   cursor: pointer;
   font-weight: 700;
-  background: rgba(255, 255, 255, 0.08);
-  transition: transform 0.2s ease, background 0.2s ease;
+  background: rgba(255,255,255,.08);
+  transition:
+    transform .2s ease,
+    background .2s ease;
 }
 
 .upload-label:hover {
   transform: translateY(-2px);
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255,255,255,.14);
 }
 
 .upload-help {
   margin-top: 14px;
-  opacity: 0.7;
+  opacity: .7;
   font-size: 14px;
 }
 
@@ -49,6 +495,11 @@
   object-fit: contain;
 }
 
+
+/* =========================================
+   GENERATED IMAGE / VIDEO
+   ========================================= */
+
 .generated-result {
   display: flex;
   flex-direction: column;
@@ -59,6 +510,7 @@
 
 .generated-result img {
   display: block;
+  width: auto;
   max-width: 100%;
   max-height: 650px;
   border-radius: 16px;
@@ -81,6 +533,11 @@
   cursor: pointer;
 }
 
+
+/* =========================================
+   LOADING
+   ========================================= */
+
 .loading {
   min-height: 180px;
   display: flex;
@@ -96,16 +553,16 @@
 }
 
 .loading small {
-  opacity: 0.65;
+  opacity: .65;
 }
 
 .spinner {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  border: 4px solid rgba(255, 255, 255, 0.2);
+  border: 4px solid rgba(255,255,255,.2);
   border-top-color: currentColor;
-  animation: duncanai-spin 0.8s linear infinite;
+  animation: duncanai-spin .8s linear infinite;
 }
 
 @keyframes duncanai-spin {
@@ -114,44 +571,57 @@
   }
 }
 
+
+/* =========================================
+   ERROR
+   ========================================= */
+
 .error {
+  width: 100%;
   padding: 16px;
   border-radius: 12px;
-  background: rgba(255, 60, 60, 0.1);
-  border: 1px solid rgba(255, 60, 60, 0.25);
+  background: rgba(255,60,60,.1);
+  border: 1px solid rgba(255,60,60,.25);
 }
 
 
 /* =========================================
-   DuncanAI Logo
+   WORKFLOW
    ========================================= */
 
-.nav .brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  width: auto;
-  height: auto;
+.step-grid {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 18px;
+  margin-top: 40px;
 }
 
-.nav .brand img {
-  width: 42px !important;
-  height: 42px !important;
-  max-width: 42px !important;
-  max-height: 42px !important;
-  min-width: 42px !important;
-  min-height: 42px !important;
-  object-fit: contain;
-  display: block;
+.step-grid div {
+  padding: 24px;
+  border-top: 1px solid var(--line);
 }
 
-footer .brand {
-  display: inline-flex;
+.step-grid strong {
+  color: #a78bfa;
+}
+
+.step-grid p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+
+/* =========================================
+   FOOTER
+   ========================================= */
+
+footer {
+  border-top: 1px solid var(--line);
+  padding: 30px 6%;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 10px;
-  width: auto;
-  height: auto;
+  color: var(--muted);
 }
 
 footer .brand img {
@@ -159,21 +629,73 @@ footer .brand img {
   height: 36px !important;
   max-width: 36px !important;
   max-height: 36px !important;
-  min-width: 36px !important;
-  min-height: 36px !important;
   object-fit: contain;
-  display: block;
 }
 
 
 /* =========================================
-   Mobile
+   TABLET
    ========================================= */
 
-@media (max-width: 700px) {
+@media (max-width: 850px) {
 
-  .upload-box {
-    padding: 20px;
+  nav {
+    display: none;
+  }
+
+  .hero {
+    grid-template-columns: 1fr;
+    padding-top: 70px;
+  }
+
+  .tool-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+
+/* =========================================
+   MOBILE
+   ========================================= */
+
+@media (max-width: 520px) {
+
+  .nav-button {
+    display: none;
+  }
+
+  .hero-actions,
+  .creator-row,
+  footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tool-grid,
+  .step-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-card {
+    min-height: 340px;
+  }
+
+  .hero-panel {
+    width: 88%;
+  }
+
+  .nav .brand img {
+    width: 38px !important;
+    height: 38px !important;
+    max-width: 38px !important;
+    max-height: 38px !important;
+  }
+
+  footer .brand img {
+    width: 34px !important;
+    height: 34px !important;
+    max-width: 34px !important;
+    max-height: 34px !important;
   }
 
   .uploaded-preview {
@@ -182,23 +704,5 @@ footer .brand img {
 
   .generated-video {
     max-height: 400px;
-  }
-
-  .nav .brand img {
-    width: 38px !important;
-    height: 38px !important;
-    max-width: 38px !important;
-    max-height: 38px !important;
-    min-width: 38px !important;
-    min-height: 38px !important;
-  }
-
-  footer .brand img {
-    width: 34px !important;
-    height: 34px !important;
-    max-width: 34px !important;
-    max-height: 34px !important;
-    min-width: 34px !important;
-    min-height: 34px !important;
   }
 }
