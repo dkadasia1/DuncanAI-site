@@ -706,3 +706,192 @@ footer .brand img {
     max-height: 400px;
   }
 }
+/* =========================================
+   DUNCANAI IMAGE → VIDEO STUDIO
+   ADD THIS AT THE VERY END
+   ========================================= */
+
+.video-workspace {
+  width: 100%;
+  margin-top: 24px;
+}
+
+.video-source-card {
+  width: 100%;
+  margin-bottom: 24px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255,255,255,.025);
+}
+
+.video-source-title {
+  margin-bottom: 14px;
+  color: #dbeafe;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.video-source-image {
+  display: block;
+  width: 100%;
+  max-width: 500px;
+  max-height: 360px;
+  margin: 0 auto;
+  object-fit: contain;
+  border-radius: 14px;
+}
+
+.video-generation-panel {
+  width: 100%;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255,255,255,.025);
+  text-align: center;
+}
+
+.video-generation-panel h3 {
+  margin: 0 0 8px;
+  color: #f8fafc;
+}
+
+.video-generation-panel p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.video-status {
+  margin-top: 22px;
+  color: #c4b5fd;
+  font-weight: 700;
+}
+
+.video-progress {
+  width: 100%;
+  max-width: 500px;
+  height: 6px;
+  margin: 18px auto 0;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #263247;
+}
+
+.video-progress span {
+  display: block;
+  width: 40%;
+  height: 100%;
+  border-radius: 20px;
+  background: linear-gradient(
+    90deg,
+    var(--accent),
+    var(--accent2)
+  );
+  animation: duncanai-progress 1.8s ease-in-out infinite;
+}
+
+@keyframes duncanai-progress {
+  0% {
+    transform: translateX(-120%);
+  }
+
+  100% {
+    transform: translateX(280%);
+  }
+}
+
+.video-result-card {
+  width: 100%;
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255,255,255,.025);
+}
+
+.video-result-title {
+  margin-bottom: 16px;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.video-result-player {
+  display: block;
+  width: 100%;
+  max-width: 900px;
+  max-height: 650px;
+  margin: 0 auto;
+  border-radius: 16px;
+  background: #000;
+  object-fit: contain;
+}
+
+.video-result-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.video-result-actions a,
+.video-result-actions button {
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.video-download {
+  background: linear-gradient(
+    135deg,
+    var(--accent),
+    #6366f1
+  );
+  color: white;
+  border: 0;
+}
+
+.video-open {
+  border: 1px solid var(--line);
+  color: #dbeafe;
+  background: rgba(255,255,255,.05);
+}
+
+.video-new {
+  border: 1px solid var(--line);
+  color: #c4b5fd;
+  background: transparent;
+}
+
+.video-success {
+  margin-top: 12px;
+  color: #67e8f9;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+@media (max-width: 700px) {
+
+  .video-generation-panel,
+  .video-result-card,
+  .video-source-card {
+    padding: 16px;
+  }
+
+  .video-result-player {
+    max-height: 450px;
+  }
+
+  .video-result-actions {
+    flex-direction: column;
+  }
+
+  .video-result-actions a,
+  .video-result-actions button {
+    width: 100%;
+    text-align: center;
+  }
+}
