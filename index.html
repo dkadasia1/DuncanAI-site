@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DuncanAI — AI Creative Studio</title>
+  <meta name="description" content="DuncanAI is an AI creative studio for generating images, animating images, and creating videos.">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="index.html"><img src="logo.svg" alt="DuncanAI logo"><span>DuncanAI</span></a>
+    <nav>
+      <a href="#studio">Studio</a>
+      <a href="features.html">Features</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="docs.html">Docs</a>
+    </nav>
+    <a class="nav-button" href="#studio">Start Creating</a>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">AI CREATIVE STUDIO</span>
+        <h1>Turn your ideas into <span>images and video.</span></h1>
+        <p>Create stunning visuals from simple prompts. DuncanAI is being built to help creators generate images, animate still images, and produce engaging videos from one simple workspace.</p>
+        <div class="hero-actions">
+          <a class="primary" href="#studio">Create with DuncanAI</a>
+          <a class="secondary" href="features.html">Explore features</a>
+        </div>
+      </div>
+      <div class="hero-card">
+        <div class="orb orb-one"></div>
+        <div class="orb orb-two"></div>
+        <div class="hero-panel">
+          <div class="panel-top"><span>✦ DuncanAI Studio</span><span>AI</span></div>
+          <div class="preview"></div>
+          <div class="prompt-line">“A cinematic African sunset over a modern city…”</div>
+          <div class="progress"><span></span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="studio" class="studio">
+      <div class="section-heading">
+        <span class="eyebrow">YOUR CREATIVE WORKSPACE</span>
+        <h2>What do you want to create?</h2>
+        <p>Choose a workflow. The AI generation engine can be connected as the next step.</p>
+      </div>
+
+      <div class="tool-grid">
+        <article class="tool-card">
+          <div class="icon">🎨</div>
+          <h3>Create Image</h3>
+          <p>Describe an idea and generate an original image.</p>
+          <button class="tool-button" data-tool="image">Start →</button>
+        </article>
+        <article class="tool-card">
+          <div class="icon">🖼️</div>
+          <h3>Image → Video</h3>
+          <p>Animate a still image with movement and cinematic effects.</p>
+          <button class="tool-button" data-tool="image-video">Start →</button>
+        </article>
+        <article class="tool-card">
+          <div class="icon">🎬</div>
+          <h3>Text → Video</h3>
+          <p>Turn a written concept into an engaging video sequence.</p>
+          <button class="tool-button" data-tool="video">Start →</button>
+        </article>
+        <article class="tool-card">
+          <div class="icon">✨</div>
+          <h3>Edit & Enhance</h3>
+          <p>Prepare a future workflow for AI editing, upscaling, and transformations.</p>
+          <button class="tool-button" data-tool="edit">Start →</button>
+        </article>
+      </div>
+
+      <div id="creator" class="creator hidden">
+        <div class="creator-head">
+          <div>
+            <span class="eyebrow">CREATOR</span>
+            <h2 id="creator-title">Create Image</h2>
+          </div>
+          <button id="close-creator" class="close">×</button>
+        </div>
+        <label for="prompt">Describe what you want to create</label>
+        <textarea id="prompt" placeholder="Example: A cinematic sunrise over the African savanna, dramatic clouds, warm light, ultra detailed..."></textarea>
+        <div class="creator-row">
+          <select id="aspect">
+            <option>16:9 Landscape</option>
+            <option>1:1 Square</option>
+            <option>9:16 Portrait</option>
+          </select>
+          <button id="generate" class="primary">Generate</button>
+        </div>
+        <div id="result" class="result">
+          <div class="result-placeholder">Your generated result will appear here.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="steps">
+      <div class="section-heading">
+        <span class="eyebrow">SIMPLE WORKFLOW</span>
+        <h2>Imagine. Create. Share.</h2>
+      </div>
+      <div class="step-grid">
+        <div><strong>01</strong><h3>Describe</h3><p>Tell DuncanAI what you want in natural language.</p></div>
+        <div><strong>02</strong><h3>Generate</h3><p>Connect your preferred AI model to create the media.</p></div>
+        <div><strong>03</strong><h3>Share</h3><p>Download and publish your creations anywhere.</p></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="brand"><img src="logo.svg" alt=""><span>DuncanAI</span></div>
+    <p>AI Creative Studio • Built for creators</p>
+  </footer>
+  <script src="script.js"></script>
+</body>
+</html>
