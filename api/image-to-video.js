@@ -6,12 +6,17 @@ export default async function handler(req, res) {
   }
 
   try {
-    const {
-      image,
-      prompt,
-      aspectRatio = "16:9",
-      duration = 5
-    } = JSON.parse(req.body);
+    const body =
+  typeof req.body === "string"
+    ? JSON.parse(req.body)
+    : req.body;
+
+const {
+  image,
+  prompt,
+  aspectRatio = "16:9",
+  duration = 5
+} = body || {};
 
     // -----------------------------------------
     // Check Runway API key
