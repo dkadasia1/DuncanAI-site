@@ -12,7 +12,17 @@ export default async function handler(req, res) {
       typeof req.body === "string"
         ? JSON.parse(req.body)
         : req.body;
+if (typeof prompt !== "string") {
+  return res.status(400).json({
+    error: "Prompt must be text."
+  });
+}
 
+if (prompt.length > 32000) {
+  return res.status(400).json({
+    error: "Prompt is too long. Maximum length is 32,000 characters."
+  });
+}
     if (!prompt || typeof prompt !== "string" || prompt.trim().length < 5) {
       return res.status(400).json({
         error: "Prompt must be at least 5 characters long."
