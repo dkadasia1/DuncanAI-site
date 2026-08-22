@@ -181,64 +181,79 @@ document.addEventListener("DOMContentLoaded", () => {
   // -----------------------------
 
   async function generateImage() {
-    const prompt = promptInput.value.trim();
+  const prompt = promptInput.value.trim();
 
-    if (prompt.length < 5) {
-      result.innerHTML = `
-        <p class="error">
-          Please enter a description of at least 5 characters.
-        </p>
-      `;
-      return;
-    }
-
-    const aspectRatio = getAspectRatio();
-
-    setLoading("Creating your image...");
-
-    try {
-      const response = await fetch("/api/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          prompt,
-          aspectRatio
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || data.error) {
-        throw new Error(data.error || "Image generation failed.");
-      }
-
-      result.innerHTML = `
-        <div class="generated-result">
-          <img
-            src="${data.imageUrl}"
-            alt="Generated image"
-          />
-
-          <a
-            href="${data.imageUrl}"
-            download="duncanai-image.png"
-            class="primary download-button"
-          >
-            Download Image
-          </a>
-        </div>
-      `;
-
-    } catch (error) {
-      result.innerHTML = `
-        <p class="error">
-          ❌ ${escapeHtml(error.message)}
-        </p>
-      `;
-    }
+  if (prompt.length < 5) {
+    result.innerHTML = `
+      <p class="error">
+        Please enter a description of at least 5 characters.
+      </p>
+    `;
+    return;
   }
+
+  if (prompt.length > 32000) {
+    result.innerHTML = `
+      <p class="error">
+        Your prompt is too long. Please keep it under 32,000 characters.
+      </p>
+    `;
+    return;
+  }
+
+  const aspectRatio = getAspectRatio();
+
+  setLoading("Creating your image...");
+
+  try {
+    const response = await fetch("/api/generate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        prompt: prompt,
+        aspectRatio: aspectRatio
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || data.error) {
+      throw new Error(
+        data.error || "Image generation failed."
+      );
+    }
+
+    if (!data.imageUrl) {
+      throw new Error("No image was returned.");
+    }
+
+    result.innerHTML = `
+      <div class="generated-result">
+        <img
+          src="${data.imageUrl}"
+          alt="${escapeHtml(prompt.substring(0, 100))}"
+        />
+
+        <a
+          href="${data.imageUrl}"
+          download="duncanai-image.png"
+          class="primary download-button"
+        >
+          Download Image
+        </a>
+      </div>
+    `;
+
+  } catch (error) {
+    result.innerHTML = `
+      <p class="error">
+        ❌ ${escapeHtml(error.message)}
+      </p>
+    `;
+  }
+}
 
   // -----------------------------
   // Image → Video
