@@ -1,4 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // =========================================
+  // DuncanAI elements
+  // =========================================
+
   const toolButtons = document.querySelectorAll(".tool-button");
 
   const creator = document.getElementById("creator");
@@ -13,15 +17,19 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentTool = "image";
   let uploadedImage = null;
 
-  // -----------------------------------------
+  // =========================================
   // Open creator
-  // -----------------------------------------
+  // =========================================
 
   toolButtons.forEach((button) => {
     button.addEventListener("click", () => {
       currentTool = button.dataset.tool;
 
       creator.classList.remove("hidden");
+
+      // -----------------------------
+      // Create Image
+      // -----------------------------
 
       if (currentTool === "image") {
         creatorTitle.textContent = "Create Image";
@@ -36,31 +44,49 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
       }
 
+      // -----------------------------
+      // Image → Video
+      // -----------------------------
+
       if (currentTool === "image-video") {
         creatorTitle.textContent = "Image → Video";
 
         promptInput.placeholder =
-          "Example: Slowly move the camera toward the woman while her hair moves gently in the ocean breeze...";
+          "Describe the movement you want: slowly move the camera toward the subject, gentle wind moving hair, natural waves...";
 
         showImageVideoInterface();
       }
+
+      // -----------------------------
+      // Text → Video
+      // -----------------------------
 
       if (currentTool === "video") {
         creatorTitle.textContent = "Text → Video";
 
         result.innerHTML = `
           <div class="result-placeholder">
-            Text → Video is coming next.
+            <strong>🎬 Text → Video</strong>
+            <p style="margin-top:8px;">
+              Text → Video is coming next.
+            </p>
           </div>
         `;
       }
+
+      // -----------------------------
+      // Edit & Enhance
+      // -----------------------------
 
       if (currentTool === "edit") {
         creatorTitle.textContent = "Edit & Enhance";
 
         result.innerHTML = `
           <div class="result-placeholder">
-            AI image editing is coming next.
+            <strong>✨ Edit & Enhance</strong>
+            <p style="margin-top:8px;">
+              AI image editing is coming next.
+            </p>
           </div>
         `;
       }
@@ -72,44 +98,50 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // -----------------------------------------
+  // =========================================
   // Close creator
-  // -----------------------------------------
+  // =========================================
 
   if (closeCreator) {
     closeCreator.addEventListener("click", () => {
       creator.classList.add("hidden");
+      uploadedImage = null;
     });
   }
 
-  // -----------------------------------------
-  // Image → Video upload interface
-  // -----------------------------------------
+  // =========================================
+  // Image → Video interface
+  // =========================================
 
   function showImageVideoInterface() {
     uploadedImage = null;
 
     result.innerHTML = `
-      <div class="upload-box">
+      <div class="video-workspace">
 
-        <input
-          type="file"
-          id="video-image-upload"
-          accept="image/png,image/jpeg,image/webp"
-        />
+        <div class="upload-box">
 
-        <label
-          for="video-image-upload"
-          class="upload-label"
-        >
-          🖼️ Choose an image
-        </label>
+          <input
+            type="file"
+            id="video-image-upload"
+            accept="image/png,image/jpeg,image/webp"
+          />
 
-        <div id="image-preview"></div>
+          <label
+            for="video-image-upload"
+            class="upload-label"
+          >
+            🖼️ Choose an image
+          </label>
 
-        <p class="upload-help">
-          Upload the image you want DuncanAI to animate.
-        </p>
+          <div id="image-preview"></div>
+
+          <p class="upload-help">
+            Upload an image you want DuncanAI to animate.
+            JPG, PNG, or WebP.
+          </p>
+
+        </div>
 
       </div>
     `;
@@ -125,9 +157,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // -----------------------------------------
-  // Read uploaded image
-  // -----------------------------------------
+  // =========================================
+  // Handle uploaded image
+  // =========================================
 
   function handleImageUpload(event) {
     const file = event.target.files?.[0];
@@ -136,14 +168,19 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // Validate image type
     if (!file.type.startsWith("image/")) {
       alert("Please select an image file.");
+      event.target.value = "";
       return;
     }
 
-    // Keep image size reasonable
+    // Keep upload under 5 MB
     if (file.size > 5 * 1024 * 1024) {
-      alert("Please choose an image smaller than 5 MB.");
+      alert(
+        "Please choose an image smaller than 5 MB."
+      );
+
       event.target.value = "";
       return;
     }
@@ -156,23 +193,43 @@ document.addEventListener("DOMContentLoaded", () => {
       const preview =
         document.getElementById("image-preview");
 
-      if (preview) {
-        preview.innerHTML = `
-          <img
-            src="${uploadedImage}"
-            alt="Uploaded image"
-            class="uploaded-preview"
-          />
-        `;
+      if (!preview) {
+        return;
       }
+
+      preview.innerHTML = `
+        <div class="video-source-card">
+
+          <div class="video-source-title">
+            🖼️ Source Image
+          </div>
+
+          <img
+            src="${escapeHtml(uploadedImage)}"
+            alt="Uploaded source image"
+            class="video-source-image"
+          />
+
+        </div>
+      `;
+    };
+
+    reader.onerror = () => {
+      uploadedImage = null;
+
+      result.innerHTML = `
+        <div class="error">
+          Unable to read that image. Please try another image.
+        </div>
+      `;
     };
 
     reader.readAsDataURL(file);
   }
 
-  // -----------------------------------------
+  // =========================================
   // Generate button
-  // -----------------------------------------
+  // =========================================
 
   if (generateButton) {
     generateButton.addEventListener(
@@ -192,7 +249,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (currentTool === "video") {
           result.innerHTML = `
             <div class="result-placeholder">
-              Text → Video is coming next.
+              <strong>🎬 Text → Video</strong>
+              <p style="margin-top:8px;">
+                Text → Video is coming next.
+              </p>
             </div>
           `;
           return;
@@ -201,7 +261,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (currentTool === "edit") {
           result.innerHTML = `
             <div class="result-placeholder">
-              AI image editing is coming next.
+              <strong>✨ Edit & Enhance</strong>
+              <p style="margin-top:8px;">
+                AI image editing is coming next.
+              </p>
             </div>
           `;
         }
@@ -209,35 +272,38 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   }
 
-  // -----------------------------------------
+  // =========================================
   // Text → Image
-  // -----------------------------------------
+  // =========================================
 
   async function generateImage() {
     const prompt = promptInput.value.trim();
 
+    // Validate
     if (prompt.length < 5) {
       result.innerHTML = `
-        <p class="error">
+        <div class="error">
           Please enter a description of at least 5 characters.
-        </p>
+        </div>
       `;
       return;
     }
 
     if (prompt.length > 32000) {
       result.innerHTML = `
-        <p class="error">
-          Your prompt is too long. Please keep it under
-          32,000 characters.
-        </p>
+        <div class="error">
+          Your prompt is too long.
+          Please keep it under 32,000 characters.
+        </div>
       `;
       return;
     }
 
     const aspectRatio = getAspectRatio();
 
-    setLoading("Creating your image...");
+    setStandardLoading(
+      "Creating your image..."
+    );
 
     try {
       const response = await fetch(
@@ -254,7 +320,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       );
 
-      const data = await response.json();
+      const data = await readJsonResponse(
+        response
+      );
 
       if (!response.ok || data.error) {
         throw new Error(
@@ -273,18 +341,18 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="generated-result">
 
           <img
-            src="${data.imageUrl}"
+            src="${escapeHtml(data.imageUrl)}"
             alt="${escapeHtml(
               prompt.substring(0, 100)
             )}"
           />
 
           <a
-            href="${data.imageUrl}"
+            href="${escapeHtml(data.imageUrl)}"
             download="duncanai-image.png"
             class="primary download-button"
           >
-            Download Image
+            ⬇ Download Image
           </a>
 
         </div>
@@ -293,24 +361,27 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (error) {
 
       result.innerHTML = `
-        <p class="error">
-          ❌ ${escapeHtml(error.message)}
-        </p>
+        <div class="error">
+          ❌ ${escapeHtml(
+            error.message ||
+            "Something went wrong."
+          )}
+        </div>
       `;
     }
   }
 
-  // -----------------------------------------
+  // =========================================
   // Image → Video
-  // -----------------------------------------
+  // =========================================
 
   async function generateImageVideo() {
 
     if (!uploadedImage) {
       result.innerHTML = `
-        <p class="error">
+        <div class="error">
           Please upload an image first.
-        </p>
+        </div>
       `;
       return;
     }
@@ -319,26 +390,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (prompt.length < 5) {
       result.innerHTML = `
-        <p class="error">
+        <div class="error">
           Please describe the movement you want
           in the video.
-        </p>
+        </div>
       `;
       return;
     }
 
     if (prompt.length > 1000) {
       result.innerHTML = `
-        <p class="error">
+        <div class="error">
           Video prompts must be under 1,000 characters.
-        </p>
+        </div>
       `;
       return;
     }
 
     const aspectRatio = getAspectRatio();
 
-    setLoading(
+    // Disable button while creating
+    generateButton.disabled = true;
+    generateButton.textContent =
+      "Creating...";
+
+    setVideoLoading(
       "Sending your image to DuncanAI..."
     );
 
@@ -348,11 +424,9 @@ document.addEventListener("DOMContentLoaded", () => {
         "/api/image-to-video",
         {
           method: "POST",
-
           headers: {
             "Content-Type": "application/json"
           },
-
           body: JSON.stringify({
             image: uploadedImage,
             prompt,
@@ -362,7 +436,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       );
 
-      const data = await response.json();
+      const data = await readJsonResponse(
+        response
+      );
 
       if (!response.ok || data.error) {
         throw new Error(
@@ -384,16 +460,25 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (error) {
 
       result.innerHTML = `
-        <p class="error">
-          ❌ ${escapeHtml(error.message)}
-        </p>
+        <div class="error">
+          ❌ ${escapeHtml(
+            error.message ||
+            "Something went wrong while creating the video."
+          )}
+        </div>
       `;
+
+    } finally {
+
+      generateButton.disabled = false;
+      generateButton.textContent =
+        "Generate";
     }
   }
 
-  // -----------------------------------------
+  // =========================================
   // Poll Runway task
-  // -----------------------------------------
+  // =========================================
 
   async function pollVideoStatus(taskId) {
 
@@ -405,10 +490,25 @@ document.addEventListener("DOMContentLoaded", () => {
       attempts++
     ) {
 
-      setLoading(
-        `Creating your video... (${attempts}/${maxAttempts})`
+      let message =
+        "Preparing your video...";
+
+      if (attempts <= 2) {
+        message =
+          "Preparing your image for animation...";
+      } else if (attempts <= 8) {
+        message =
+          "Animating your image...";
+      } else {
+        message =
+          "Finalizing your video...";
+      }
+
+      setVideoLoading(
+        `${message} (${attempts}/${maxAttempts})`
       );
 
+      // Wait before polling
       await wait(5000);
 
       try {
@@ -419,7 +519,9 @@ document.addEventListener("DOMContentLoaded", () => {
           )}`
         );
 
-        const data = await response.json();
+        const data = await readJsonResponse(
+          response
+        );
 
         if (!response.ok || data.error) {
           throw new Error(
@@ -429,9 +531,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         console.log(
-          "Video status:",
+          "DuncanAI video status:",
           data.status
         );
+
+        // -----------------------------
+        // Success
+        // -----------------------------
 
         if (
           data.status === "SUCCEEDED"
@@ -439,7 +545,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
           if (!data.videoUrl) {
             throw new Error(
-              "Runway finished the video but did not return a video URL."
+              "Runway completed the video but did not return a video URL."
             );
           }
 
@@ -450,24 +556,42 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
 
+        // -----------------------------
+        // Failure
+        // -----------------------------
+
         if (
           data.status === "FAILED"
         ) {
-
           throw new Error(
             data.error ||
             "Runway video generation failed."
           );
         }
 
+        // -----------------------------
+        // Still processing
+        // -----------------------------
+
+        if (
+          data.status === "PENDING" ||
+          data.status === "QUEUED" ||
+          data.status === "RUNNING" ||
+          data.status === "PROCESSING" ||
+          data.status === "THROTTLED"
+        ) {
+          continue;
+        }
+
       } catch (error) {
 
         result.innerHTML = `
-          <p class="error">
+          <div class="error">
             ❌ ${escapeHtml(
-              error.message
+              error.message ||
+              "Unable to check video status."
             )}
-          </p>
+          </div>
         `;
 
         return;
@@ -475,81 +599,130 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     result.innerHTML = `
-      <p class="error">
+      <div class="error">
         ❌ Video generation is taking longer
         than expected. Please try again.
-      </p>
+      </div>
     `;
   }
 
-  // -----------------------------------------
-  // Display generated video
-  // -----------------------------------------
+  // =========================================
+  // Show generated video
+  // =========================================
 
   function showGeneratedVideo(videoUrl) {
 
     result.innerHTML = `
-      <div class="generated-result">
+      <div class="video-workspace">
 
-        <video
-          controls
-          autoplay
-          playsinline
-          preload="metadata"
-          class="generated-video"
-        >
-          <source
-            src="${videoUrl}"
-            type="video/mp4"
+        <div class="video-result-card">
+
+          <div class="video-result-title">
+            🎬 Your DuncanAI video is ready
+          </div>
+
+          <video
+            controls
+            playsinline
+            preload="metadata"
+            class="video-result-player"
           >
+            <source
+              src="${escapeHtml(videoUrl)}"
+              type="video/mp4"
+            />
 
-          Your browser does not support
-          video playback.
-        </video>
+            Your browser does not support
+            video playback.
+          </video>
 
-        <div class="video-actions">
+          <div class="video-success">
+            ✓ Video generated successfully
+          </div>
 
-          <a
-            href="${videoUrl}"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="primary download-button"
-          >
-            Open Video
-          </a>
+          <div class="video-result-actions">
 
-          <a
-            href="${videoUrl}"
-            download="duncanai-video.mp4"
-            class="secondary download-button"
-          >
-            Download Video
-          </a>
+            <a
+              href="${escapeHtml(videoUrl)}"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="video-open"
+            >
+              ↗ Open Video
+            </a>
+
+            <a
+              href="${escapeHtml(videoUrl)}"
+              download="duncanai-video.mp4"
+              class="video-download"
+            >
+              ⬇ Download Video
+            </a>
+
+            <button
+              type="button"
+              id="create-another-video"
+              class="video-new"
+            >
+              ✨ Create Another
+            </button>
+
+          </div>
 
         </div>
 
       </div>
     `;
 
+    // Create another video
+    const newVideoButton =
+      document.getElementById(
+        "create-another-video"
+      );
+
+    if (newVideoButton) {
+      newVideoButton.addEventListener(
+        "click",
+        () => {
+
+          uploadedImage = null;
+
+          promptInput.value = "";
+
+          showImageVideoInterface();
+
+          promptInput.focus();
+        }
+      );
+    }
+
+    // Video error detection
     const video =
-      result.querySelector("video");
+      result.querySelector(
+        ".video-result-player"
+      );
 
     if (video) {
+
       video.addEventListener(
         "error",
         () => {
-          console.error(
-            "Browser could not play video:",
-            video.error
-          );
+
+          result.innerHTML = `
+            <div class="error">
+              ❌ The video was generated, but
+              your browser could not play it.
+              Try "Open Video".
+            </div>
+          `;
         }
       );
     }
   }
 
-  // -----------------------------------------
+  // =========================================
   // Aspect ratio
-  // -----------------------------------------
+  // =========================================
 
   function getAspectRatio() {
 
@@ -567,16 +740,15 @@ document.addEventListener("DOMContentLoaded", () => {
     return "16:9";
   }
 
-  // -----------------------------------------
-  // Loading
-  // -----------------------------------------
+  // =========================================
+  // Standard loading
+  // =========================================
 
-  function setLoading(message) {
+  function setStandardLoading(message) {
 
     result.innerHTML = `
-      <div
-        class="result-placeholder loading"
-      >
+      <div class="result-placeholder loading">
+
         <div class="spinner"></div>
 
         <p>
@@ -586,48 +758,96 @@ document.addEventListener("DOMContentLoaded", () => {
         <small>
           Please wait...
         </small>
+
       </div>
     `;
   }
 
-  // -----------------------------------------
-  // Utility
-  // -----------------------------------------
+  // =========================================
+  // Video loading
+  // =========================================
+
+  function setVideoLoading(message) {
+
+    result.innerHTML = `
+      <div class="video-generation-panel">
+
+        <div class="spinner"></div>
+
+        <h3>
+          🎬 Creating your video
+        </h3>
+
+        <p>
+          DuncanAI is animating your image with AI.
+        </p>
+
+        <div class="video-status">
+          ${escapeHtml(message)}
+        </div>
+
+        <div class="video-progress">
+          <span></span>
+        </div>
+
+        <p style="margin-top:16px;font-size:13px;">
+          Please keep this page open while your
+          video is being created.
+        </p>
+
+      </div>
+    `;
+  }
+
+  // =========================================
+  // Read JSON safely
+  // =========================================
+
+  async function readJsonResponse(response) {
+
+    const text =
+      await response.text();
+
+    if (!text) {
+      return {};
+    }
+
+    try {
+      return JSON.parse(text);
+    } catch {
+      return {
+        error:
+          text ||
+          `Server returned HTTP ${response.status}`
+      };
+    }
+  }
+
+  // =========================================
+  // Wait helper
+  // =========================================
 
   function wait(milliseconds) {
-
     return new Promise(
-      (resolve) => {
+      (resolve) =>
         setTimeout(
           resolve,
           milliseconds
-        );
-      }
+        )
     );
   }
+
+  // =========================================
+  // Escape HTML
+  // =========================================
 
   function escapeHtml(value) {
 
     return String(value)
-      .replaceAll(
-        "&",
-        "&amp;"
-      )
-      .replaceAll(
-        "<",
-        "&lt;"
-      )
-      .replaceAll(
-        ">",
-        "&gt;"
-      )
-      .replaceAll(
-        '"',
-        "&quot;"
-      )
-      .replaceAll(
-        "'",
-        "&#039;"
-      );
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 });
