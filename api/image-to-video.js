@@ -6,17 +6,21 @@ export default async function handler(req, res) {
   }
 
   try {
-    const body =
-  typeof req.body === "string"
-    ? JSON.parse(req.body)
-    : req.body;
+    // -----------------------------------------
+    // Parse request body safely
+    // -----------------------------------------
 
-const {
-  image,
-  prompt,
-  aspectRatio = "16:9",
-  duration = 5
-} = body || {};
+    const body =
+      typeof req.body === "string"
+        ? JSON.parse(req.body)
+        : req.body;
+
+    const {
+      image,
+      prompt,
+      aspectRatio = "16:9",
+      duration = 5
+    } = body || {};
 
     // -----------------------------------------
     // Check Runway API key
@@ -38,10 +42,11 @@ const {
       });
     }
 
-    // Runway data URI limit is 5 MB.
+    // Runway data URI limit
     if (image.length > 5242880) {
       return res.status(400).json({
-        error: "Image is too large. Please use an image smaller than 5 MB."
+        error:
+          "Image is too large. Please use an image smaller than 5 MB."
       });
     }
 
@@ -49,15 +54,26 @@ const {
     // Validate prompt
     // -----------------------------------------
 
-    if (!prompt || prompt.trim().length < 5) {
+    if (!prompt || typeof prompt !== "string") {
       return res.status(400).json({
-        error: "Please describe the movement you want in the video."
+        error:
+          "Please describe the movement you want in the video."
       });
     }
 
-    if (prompt.trim().length > 1000) {
+    const cleanPrompt = prompt.trim();
+
+    if (cleanPrompt.length < 5) {
       return res.status(400).json({
-        error: "Video prompt is too long. Please keep it under 1000 characters."
+        error:
+          "Please describe the movement you want in the video."
+      });
+    }
+
+    if (cleanPrompt.length > 1000) {
+      return res.status(400).json({
+        error:
+          "Video prompt is too long. Please keep it under 1000 characters."
       });
     }
 
@@ -73,12 +89,13 @@ const {
       videoDuration > 10
     ) {
       return res.status(400).json({
-        error: "Video duration must be between 2 and 10 seconds."
+        error:
+          "Video duration must be between 2 and 10 seconds."
       });
     }
 
     // -----------------------------------------
-    // Map DuncanAI ratios to Runway
+    // Map DuncanAI aspect ratios
     // -----------------------------------------
 
     const ratioMap = {
@@ -105,30 +122,33 @@ const {
         method: "POST",
 
         headers: {
-          "Authorization": `Bearer ${process.env.RUNWAY_API_KEY}`,
+          Authorization: `Bearer ${process.env.RUNWAY_API_KEY}`,
           "Content-Type": "application/json",
           "X-Runway-Version": "2024-11-06"
         },
 
         body: JSON.stringify({
           model: "gen4_turbo",
-
           promptImage: image,
-
-          promptText: prompt.trim(),
-
+          promptText: cleanPrompt,
           position: "first",
-
           ratio: ratio,
-
           duration: videoDuration
         })
       }
     );
 
+    // -----------------------------------------
+    // Read Runway response
+    // -----------------------------------------
+
     const responseText = await response.text();
 
-    console.log("Runway response:", response.status, responseText);
+    console.log(
+      "Runway response:",
+      response.status,
+      responseText
+    );
 
     // -----------------------------------------
     // Handle Runway errors
@@ -142,6 +162,7 @@ const {
 
         runwayError =
           parsed?.error?.message ||
+          parsed?.error ||
           parsed?.message ||
           responseText;
       } catch {
@@ -154,7 +175,7 @@ const {
     }
 
     // -----------------------------------------
-    // Parse response
+    // Parse successful response
     // -----------------------------------------
 
     let data;
@@ -167,27 +188,37 @@ const {
       });
     }
 
-    if (!data.id) {
+    // -----------------------------------------
+    // Validate task ID
+    // -----------------------------------------
+
+    if (!data || !data.id) {
       return res.status(500).json({
-        error: "Runway did not return a video task ID."
+        error:
+          "Runway did not return a video task ID."
       });
     }
 
     // -----------------------------------------
-    // Return task information
+    // Return task ID
     // -----------------------------------------
 
     return res.status(200).json({
       success: true,
       taskId: data.id,
-      estimatedCost: data.estimatedCost || null
+      estimatedCost:
+        data.estimatedCost || null
     });
 
   } catch (error) {
-    console.error("Image-to-video server error:", error);
+    console.error(
+      "Image-to-video server error:",
+      error
+    );
 
     return res.status(500).json({
-      error: error.message ||
+      error:
+        error?.message ||
         "Something went wrong while creating the video."
     });
   }
