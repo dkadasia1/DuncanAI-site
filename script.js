@@ -1,44 +1,44 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("generate-form");
   const promptInput = document.getElementById("prompt");
-  const aspectRatioInput = document.getElementById("aspect-ratio");
-  const output = document.getElementById("output");
-  const loading = document.getElementById("loading");
-  const downloadBtn = document.getElementById("download");
+  const aspectInput = document.getElementById("aspect");
+  const generateButton = document.getElementById("generate");
+  const result = document.getElementById("result");
 
-  // Make sure the page has the required elements
-  if (!form) {
-    console.error("DuncanAI: generate-form was not found.");
+  if (!promptInput || !aspectInput || !generateButton || !result) {
+    console.error("DuncanAI: Required creator elements were not found.");
     return;
   }
 
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
+  generateButton.addEventListener("click", async () => {
+    const prompt = promptInput.value.trim();
 
-    const prompt = promptInput?.value?.trim();
-    const aspectRatio = aspectRatioInput?.value || "1:1";
+    // Convert the dropdown text into the API aspect ratio
+    let aspectRatio = "16:9";
+
+    if (aspectInput.value.startsWith("1:1")) {
+      aspectRatio = "1:1";
+    } else if (aspectInput.value.startsWith("9:16")) {
+      aspectRatio = "9:16";
+    }
 
     if (!prompt || prompt.length < 5) {
-      if (output) {
-        output.innerHTML =
-          '<p class="error">Please enter a prompt with at least 5 characters.</p>';
-      }
+      result.innerHTML = `
+        <div class="result-placeholder">
+          Please enter a description of at least 5 characters.
+        </div>
+      `;
       return;
     }
 
     // Show loading state
-    if (loading) {
-      loading.style.display = "block";
-      loading.textContent = "Creating your image...";
-    }
+    generateButton.disabled = true;
+    generateButton.textContent = "Creating...";
 
-    if (output) {
-      output.innerHTML = "";
-    }
-
-    if (downloadBtn) {
-      downloadBtn.style.display = "none";
-    }
+    result.innerHTML = `
+      <div class="result-placeholder">
+        ✨ DuncanAI is creating your image...
+      </div>
+    `;
 
     try {
       const response = await fetch("/api/generate", {
@@ -64,48 +64,51 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error("No image was returned.");
       }
 
-      // Create image
-      const img = document.createElement("img");
+      // Display generated image
+      result.innerHTML = "";
 
-      img.src = data.imageUrl;
-      img.alt = prompt;
-      img.loading = "lazy";
+      const image = document.createElement("img");
 
-      if (output) {
-        output.appendChild(img);
-      }
+      image.src = data.imageUrl;
+      image.alt = prompt;
+      image.style.maxWidth = "100%";
+      image.style.borderRadius = "16px";
+      image.style.display = "block";
 
-      // Show download button
-      if (downloadBtn) {
-        downloadBtn.style.display = "inline-block";
+      result.appendChild(image);
 
-        downloadBtn.onclick = () => {
-          const link = document.createElement("a");
+      // Create download button
+      const downloadButton = document.createElement("button");
 
-          link.href = data.imageUrl;
-          link.download = "duncanai-generated-image.png";
+      downloadButton.textContent = "Download Image";
+      downloadButton.className = "primary";
+      downloadButton.style.marginTop = "16px";
 
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        };
-      }
+      downloadButton.addEventListener("click", () => {
+        const link = document.createElement("a");
+
+        link.href = data.imageUrl;
+        link.download = "duncanai-image.png";
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+
+      result.appendChild(downloadButton);
 
     } catch (error) {
-      console.error("DuncanAI error:", error);
+      console.error("DuncanAI generation error:", error);
 
-      if (output) {
-        output.innerHTML = `
-          <p class="error">
-            ${error.message || "Something went wrong. Please try again."}
-          </p>
-        `;
-      }
+      result.innerHTML = `
+        <div class="result-placeholder">
+          ❌ ${error.message || "Something went wrong. Please try again."}
+        </div>
+      `;
 
     } finally {
-      if (loading) {
-        loading.style.display = "none";
-      }
+      generateButton.disabled = false;
+      generateButton.textContent = "Generate";
     }
   });
 });
