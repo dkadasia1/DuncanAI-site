@@ -1,18 +1,103 @@
 document.addEventListener("DOMContentLoaded", () => {
+  const creator = document.getElementById("creator");
+  const creatorTitle = document.getElementById("creator-title");
+  const closeCreator = document.getElementById("close-creator");
+
   const promptInput = document.getElementById("prompt");
   const aspectInput = document.getElementById("aspect");
   const generateButton = document.getElementById("generate");
   const result = document.getElementById("result");
 
-  if (!promptInput || !aspectInput || !generateButton || !result) {
-    console.error("DuncanAI: Required creator elements were not found.");
+  // -----------------------------
+  // OPEN CREATOR
+  // -----------------------------
+
+  const toolButtons = document.querySelectorAll(".tool-button");
+
+  toolButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const tool = button.dataset.tool;
+
+      if (tool === "image") {
+        creatorTitle.textContent = "Create Image";
+        promptInput.placeholder =
+          "Example: A cinematic sunrise over the African savanna, dramatic clouds, warm light, ultra detailed...";
+
+        creator.classList.remove("hidden");
+        creator.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+
+        promptInput.focus();
+      }
+
+      if (tool === "image-video") {
+        creatorTitle.textContent = "Image → Video";
+
+        creator.classList.remove("hidden");
+        creator.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      }
+
+      if (tool === "video") {
+        creatorTitle.textContent = "Text → Video";
+
+        creator.classList.remove("hidden");
+        creator.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+
+        result.innerHTML = `
+          <div class="result-placeholder">
+            🎬 Text → Video is coming next.
+          </div>
+        `;
+      }
+
+      if (tool === "edit") {
+        creatorTitle.textContent = "Edit & Enhance";
+
+        creator.classList.remove("hidden");
+        creator.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+
+        result.innerHTML = `
+          <div class="result-placeholder">
+            ✨ AI editing and enhancement is coming next.
+          </div>
+        `;
+      }
+    });
+  });
+
+  // -----------------------------
+  // CLOSE CREATOR
+  // -----------------------------
+
+  if (closeCreator) {
+    closeCreator.addEventListener("click", () => {
+      creator.classList.add("hidden");
+    });
+  }
+
+  // -----------------------------
+  // GENERATE IMAGE
+  // -----------------------------
+
+  if (!generateButton) {
+    console.error("DuncanAI: Generate button not found.");
     return;
   }
 
   generateButton.addEventListener("click", async () => {
     const prompt = promptInput.value.trim();
 
-    // Convert the dropdown text into the API aspect ratio
     let aspectRatio = "16:9";
 
     if (aspectInput.value.startsWith("1:1")) {
@@ -21,6 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
       aspectRatio = "9:16";
     }
 
+    // Validate prompt
     if (!prompt || prompt.length < 5) {
       result.innerHTML = `
         <div class="result-placeholder">
@@ -30,7 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Show loading state
+    // Loading state
     generateButton.disabled = true;
     generateButton.textContent = "Creating...";
 
@@ -64,20 +150,22 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error("No image was returned.");
       }
 
-      // Display generated image
+      // Display image
       result.innerHTML = "";
 
       const image = document.createElement("img");
 
       image.src = data.imageUrl;
       image.alt = prompt;
+
+      image.style.width = "100%";
       image.style.maxWidth = "100%";
       image.style.borderRadius = "16px";
       image.style.display = "block";
 
       result.appendChild(image);
 
-      // Create download button
+      // Download button
       const downloadButton = document.createElement("button");
 
       downloadButton.textContent = "Download Image";
