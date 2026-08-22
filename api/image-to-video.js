@@ -33,11 +33,11 @@ export default async function handler(req, res) {
       });
     }
 
-    // Runway supports data:image/... inputs.
-    // Keep the image under Runway's input size limit.
-    if (image.length > 7000000) {
+    // Runway supports image data URIs.
+    // Keep the encoded image within the 5 MB limit.
+    if (image.length > 5242880) {
       return res.status(400).json({
-        error: "Image is too large. Please use a smaller image."
+        error: "Image is too large. Please use an image smaller than 5 MB."
       });
     }
 
@@ -45,13 +45,21 @@ export default async function handler(req, res) {
     // Validate prompt
     // -----------------------------------------
 
-    if (!prompt || prompt.trim().length < 5) {
+    if (!prompt || typeof prompt !== "string") {
       return res.status(400).json({
         error: "Please describe the movement you want in the video."
       });
     }
 
-    if (prompt.trim().length > 1000) {
+    const cleanPrompt = prompt.trim();
+
+    if (cleanPrompt.length < 5) {
+      return res.status(400).json({
+        error: "Please describe the movement you want in the video."
+      });
+    }
+
+    if (cleanPrompt.length > 1000) {
       return res.status(400).json({
         error: "Video prompt is too long. Please keep it under 1000 characters."
       });
@@ -75,11 +83,15 @@ export default async function handler(req, res) {
 
     // -----------------------------------------
     // Map DuncanAI ratios to Runway
+    //
+    // API version 2024-11-06:
+    // 16:9 → 1280:768
+    // 9:16 → 768:1280
     // -----------------------------------------
 
     const ratioMap = {
-      "16:9": "1280:720",
-      "9:16": "720:1280"
+      "16:9": "1280:768",
+      "9:16": "768:1280"
     };
 
     const ratio = ratioMap[aspectRatio];
@@ -91,7 +103,7 @@ export default async function handler(req, res) {
     }
 
     // -----------------------------------------
-    // Create Runway video task
+    // Create Runway image-to-video task
     // -----------------------------------------
 
     const response = await fetch(
@@ -107,13 +119,9 @@ export default async function handler(req, res) {
 
         body: JSON.stringify({
           model: "gen4_turbo",
-
           promptImage: image,
-
-          promptText: prompt.trim(),
-
-          ratio: ratio,
-
+          promptText: cleanPrompt,
+          ratio,
           duration: videoDuration
         })
       }
@@ -152,6 +160,10 @@ export default async function handler(req, res) {
         error: "Runway returned an invalid response."
       });
     }
+
+    // -----------------------------------------
+    // Make sure Runway returned a task ID
+    // -----------------------------------------
 
     if (!data.id) {
       return res.status(500).json({
