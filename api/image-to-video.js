@@ -49,9 +49,9 @@ export default async function handler(req, res) {
 
     // Map DuncanAI aspect ratios to Runway ratios
     const ratioMap = {
-      "16:9": "1280:720",
-      "9:16": "720:1280"
-    };
+  "16:9": "1280:720",
+  "9:16": "720:1280"
+};
 
     const ratio = ratioMap[aspectRatio];
 
@@ -78,8 +78,7 @@ export default async function handler(req, res) {
 
           promptText: prompt.trim(),
 
-          position: "first",
-
+        
           ratio,
 
           duration: videoDuration
