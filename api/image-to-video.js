@@ -33,8 +33,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // Runway supports image data URIs.
-    // Keep the encoded image within the 5 MB limit.
+    // Runway data URI limit is 5 MB.
     if (image.length > 5242880) {
       return res.status(400).json({
         error: "Image is too large. Please use an image smaller than 5 MB."
@@ -45,21 +44,13 @@ export default async function handler(req, res) {
     // Validate prompt
     // -----------------------------------------
 
-    if (!prompt || typeof prompt !== "string") {
+    if (!prompt || prompt.trim().length < 5) {
       return res.status(400).json({
         error: "Please describe the movement you want in the video."
       });
     }
 
-    const cleanPrompt = prompt.trim();
-
-    if (cleanPrompt.length < 5) {
-      return res.status(400).json({
-        error: "Please describe the movement you want in the video."
-      });
-    }
-
-    if (cleanPrompt.length > 1000) {
+    if (prompt.trim().length > 1000) {
       return res.status(400).json({
         error: "Video prompt is too long. Please keep it under 1000 characters."
       });
@@ -83,27 +74,24 @@ export default async function handler(req, res) {
 
     // -----------------------------------------
     // Map DuncanAI ratios to Runway
-    //
-    // API version 2024-11-06:
-    // 16:9 → 1280:768
-    // 9:16 → 768:1280
     // -----------------------------------------
 
     const ratioMap = {
-      "16:9": "1280:768",
-      "9:16": "768:1280"
+      "16:9": "1280:720",
+      "9:16": "720:1280",
+      "1:1": "960:960"
     };
 
     const ratio = ratioMap[aspectRatio];
 
     if (!ratio) {
       return res.status(400).json({
-        error: "Invalid aspect ratio. Choose 16:9 or 9:16."
+        error: "Invalid aspect ratio."
       });
     }
 
     // -----------------------------------------
-    // Create Runway image-to-video task
+    // Create Runway Image → Video task
     // -----------------------------------------
 
     const response = await fetch(
@@ -119,9 +107,15 @@ export default async function handler(req, res) {
 
         body: JSON.stringify({
           model: "gen4_turbo",
+
           promptImage: image,
-          promptText: cleanPrompt,
-          ratio,
+
+          promptText: prompt.trim(),
+
+          position: "first",
+
+          ratio: ratio,
+
           duration: videoDuration
         })
       }
@@ -129,26 +123,33 @@ export default async function handler(req, res) {
 
     const responseText = await response.text();
 
-    console.log("Runway response:", responseText);
+    console.log("Runway response:", response.status, responseText);
 
     // -----------------------------------------
     // Handle Runway errors
     // -----------------------------------------
 
     if (!response.ok) {
-      console.error(
-        "Runway API error:",
-        response.status,
-        responseText
-      );
+      let runwayError = responseText;
+
+      try {
+        const parsed = JSON.parse(responseText);
+
+        runwayError =
+          parsed?.error?.message ||
+          parsed?.message ||
+          responseText;
+      } catch {
+        // Keep original response
+      }
 
       return res.status(response.status).json({
-        error: `Runway API error: ${responseText}`
+        error: `Runway API error: ${runwayError}`
       });
     }
 
     // -----------------------------------------
-    // Parse successful response
+    // Parse response
     // -----------------------------------------
 
     let data;
@@ -161,10 +162,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // -----------------------------------------
-    // Make sure Runway returned a task ID
-    // -----------------------------------------
-
     if (!data.id) {
       return res.status(500).json({
         error: "Runway did not return a video task ID."
@@ -172,7 +169,7 @@ export default async function handler(req, res) {
     }
 
     // -----------------------------------------
-    // Return task ID to DuncanAI
+    // Return task information
     // -----------------------------------------
 
     return res.status(200).json({
@@ -182,13 +179,11 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error(
-      "Image-to-video server error:",
-      error
-    );
+    console.error("Image-to-video server error:", error);
 
     return res.status(500).json({
-      error: "Something went wrong while creating the video."
+      error: error.message ||
+        "Something went wrong while creating the video."
     });
   }
 }
