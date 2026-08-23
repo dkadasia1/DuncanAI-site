@@ -1,16 +1,39 @@
 export default async function handler(req, res) {
+  // =========================================
+  // ONLY GET REQUESTS
+  // =========================================
+
   if (req.method !== "GET") {
     return res.status(405).json({
       error: "Method not allowed"
     });
   }
 
-  try {
-    const taskId = req.query.taskId;
+  // =========================================
+  // PREVENT CACHING
+  // =========================================
 
-    // -----------------------------------------
-    // Validate task ID
-    // -----------------------------------------
+  res.setHeader(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, proxy-revalidate"
+  );
+
+  res.setHeader(
+    "Pragma",
+    "no-cache"
+  );
+
+  res.setHeader(
+    "Expires",
+    "0"
+  );
+
+  try {
+    // =========================================
+    // GET TASK ID
+    // =========================================
+
+    const taskId = req.query.taskId;
 
     if (!taskId) {
       return res.status(400).json({
@@ -18,38 +41,48 @@ export default async function handler(req, res) {
       });
     }
 
-    // -----------------------------------------
-    // Check Runway API key
-    // -----------------------------------------
+    // =========================================
+    // CHECK RUNWAY API KEY
+    // =========================================
 
-    if (!process.env.RUNWAY_API_KEY) {
+    const apiKey = process.env.RUNWAY_API_KEY;
+
+    if (!apiKey) {
       return res.status(500).json({
         error: "Runway API is not configured yet."
       });
     }
 
-    // -----------------------------------------
-    // Ask Runway for task status
-    // -----------------------------------------
+    // =========================================
+    // REQUEST CURRENT RUNWAY TASK STATUS
+    // =========================================
 
     const response = await fetch(
-      `https://api.dev.runwayml.com/v1/tasks/${encodeURIComponent(taskId)}`,
+      `https://api.dev.runwayml.com/v1/tasks/${encodeURIComponent(
+        taskId
+      )}`,
       {
         method: "GET",
+
         headers: {
-          "Authorization": `Bearer ${process.env.RUNWAY_API_KEY}`,
-          "X-Runway-Version": "2024-11-06"
+          Authorization: `Bearer ${apiKey}`,
+          "X-Runway-Version": "2024-11-06",
+          "Cache-Control": "no-cache"
         }
       }
     );
 
     const responseText = await response.text();
 
-    console.log("Runway task response:", responseText);
+    console.log(
+      "Runway task response:",
+      response.status,
+      responseText
+    );
 
-    // -----------------------------------------
-    // Handle Runway errors
-    // -----------------------------------------
+    // =========================================
+    // HANDLE RUNWAY ERROR
+    // =========================================
 
     if (!response.ok) {
       console.error(
@@ -58,14 +91,30 @@ export default async function handler(req, res) {
         responseText
       );
 
+      let message = responseText;
+
+      try {
+        const parsed = JSON.parse(responseText);
+
+        if (typeof parsed?.error === "string") {
+          message = parsed.error;
+        } else if (parsed?.error?.message) {
+          message = parsed.error.message;
+        } else if (parsed?.message) {
+          message = parsed.message;
+        }
+      } catch {
+        // Keep original response
+      }
+
       return res.status(response.status).json({
-        error: `Runway task error: ${responseText}`
+        error: `Runway task error: ${message}`
       });
     }
 
-    // -----------------------------------------
-    // Parse response
-    // -----------------------------------------
+    // =========================================
+    // PARSE RUNWAY RESPONSE
+    // =========================================
 
     let data;
 
@@ -73,47 +122,61 @@ export default async function handler(req, res) {
       data = JSON.parse(responseText);
     } catch {
       return res.status(500).json({
-        error: "Runway returned an invalid task response."
+        error:
+          "Runway returned an invalid task response."
       });
     }
 
-    // -----------------------------------------
-    // Task still processing
-    // -----------------------------------------
+    // =========================================
+    // CURRENT TASK STATUS
+    // =========================================
+
+    const status = data.status || "UNKNOWN";
+
+    console.log(
+      "DuncanAI task status:",
+      taskId,
+      status
+    );
+
+    // =========================================
+    // TASK STILL PROCESSING
+    // =========================================
 
     if (
-      data.status === "PENDING" ||
-      data.status === "RUNNING" ||
-      data.status === "THROTTLED"
+      status === "PENDING" ||
+      status === "RUNNING" ||
+      status === "THROTTLED"
     ) {
       return res.status(200).json({
         success: true,
-        status: data.status,
-        taskId: data.id
+        status,
+        taskId: data.id || taskId
       });
     }
 
-    // -----------------------------------------
-    // Task failed
-    // -----------------------------------------
+    // =========================================
+    // TASK FAILED
+    // =========================================
 
-    if (data.status === "FAILED") {
+    if (status === "FAILED") {
       return res.status(200).json({
         success: false,
         status: "FAILED",
-        taskId: data.id,
+        taskId: data.id || taskId,
         error:
           data.failure ||
           data.failureCode ||
+          data.error ||
           "Runway video generation failed."
       });
     }
 
-    // -----------------------------------------
-    // Task succeeded
-    // -----------------------------------------
+    // =========================================
+    // TASK SUCCEEDED
+    // =========================================
 
-    if (data.status === "SUCCEEDED") {
+    if (status === "SUCCEEDED") {
       const videoUrl =
         data.output?.[0] ||
         data.output?.video ||
@@ -122,31 +185,32 @@ export default async function handler(req, res) {
 
       if (!videoUrl) {
         console.error(
-          "Runway succeeded but no video URL was returned:",
+          "Runway succeeded but returned no video URL:",
           data
         );
 
         return res.status(500).json({
-          error: "Runway completed the video but returned no video URL."
+          error:
+            "Runway completed the video but returned no video URL."
         });
       }
 
       return res.status(200).json({
         success: true,
         status: "SUCCEEDED",
-        taskId: data.id,
+        taskId: data.id || taskId,
         videoUrl
       });
     }
 
-    // -----------------------------------------
-    // Unknown status
-    // -----------------------------------------
+    // =========================================
+    // UNKNOWN STATUS
+    // =========================================
 
     return res.status(200).json({
       success: true,
-      status: data.status || "UNKNOWN",
-      taskId: data.id
+      status,
+      taskId: data.id || taskId
     });
 
   } catch (error) {
@@ -156,7 +220,9 @@ export default async function handler(req, res) {
     );
 
     return res.status(500).json({
-      error: "Something went wrong while checking the video."
+      error:
+        error?.message ||
+        "Something went wrong while checking the video."
     });
   }
 }
