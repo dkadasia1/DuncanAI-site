@@ -706,9 +706,10 @@ footer .brand img {
     max-height: 400px;
   }
 }
+
+
 /* =========================================
    DUNCANAI IMAGE → VIDEO STUDIO
-   ADD THIS AT THE VERY END
    ========================================= */
 
 .video-workspace {
@@ -894,4 +895,226 @@ footer .brand img {
     width: 100%;
     text-align: center;
   }
+}
+
+
+/* =========================================
+   DUNCANAI MY CREATIONS
+   ========================================= */
+
+.creations-section {
+  max-width: 1200px;
+  margin: auto;
+  padding: 70px 6%;
+}
+
+.creations-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-top: 34px;
+  margin-bottom: 24px;
+}
+
+.creation-filter {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.creation-filter-button {
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.04);
+  color: #cbd5e1;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  font-family: inherit;
+}
+
+.creation-filter-button:hover {
+  background: rgba(255,255,255,.08);
+}
+
+.creation-filter-button.active {
+  background: linear-gradient(
+    135deg,
+    var(--accent),
+    #6366f1
+  );
+  color: white;
+  border-color: transparent;
+}
+
+.clear-creations-button {
+  border: 1px solid rgba(255,255,255,.12);
+  background: transparent;
+  color: #fda4af;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  font-family: inherit;
+}
+
+.clear-creations-button:hover {
+  background: rgba(255,60,90,.08);
+}
+
+.creations-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.creation-card {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(20,31,50,.9),
+      rgba(12,18,30,.95)
+    );
+}
+
+.creation-media {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  background: #050812;
+  overflow: hidden;
+}
+
+.creation-media img,
+.creation-media video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.creation-info {
+  padding: 16px;
+}
+
+.creation-type {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: #a78bfa;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.creation-prompt {
+  color: #dbe4f0;
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 42px;
+}
+
+.creation-date {
+  margin-top: 8px;
+  color: #75839a;
+  font-size: 12px;
+}
+
+.creation-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.creation-action {
+  padding: 9px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.04);
+  color: #dbeafe;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.creation-action:hover {
+  background: rgba(255,255,255,.08);
+}
+
+.creation-action.delete {
+  color: #fda4af;
+}
+
+.creations-empty {
+  grid-column: 1 / -1;
+  min-height: 260px;
+  padding: 40px 24px;
+  border: 1px dashed rgba(255,255,255,.14);
+  border-radius: 18px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.creations-empty-icon {
+  font-size: 42px;
+  margin-bottom: 8px;
+}
+
+.creations-empty h3 {
+  margin: 8px 0;
+}
+
+.creations-empty p {
+  color: var(--muted);
+  margin: 0 0 20px;
+}
+
+@media (max-width: 850px) {
+
+  .creations-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .creations-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+}
+
+@media (max-width: 520px) {
+
+  .creations-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .creations-toolbar {
+    width: 100%;
+  }
+
+  .creation-filter {
+    width: 100%;
+  }
+
+  .creation-filter-button {
+    flex: 1;
+  }
+
+  .clear-creations-button {
+    width: 100%;
+  }
+
+  .clear-creations-button {
+    width: 100%;
+  }
+
 }
