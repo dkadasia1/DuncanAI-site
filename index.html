@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
   <title>DuncanAI — AI Creative Studio</title>
 
@@ -43,6 +46,7 @@
       <span>DuncanAI</span>
     </a>
 
+
     <nav>
 
       <a href="#studio">
@@ -67,12 +71,39 @@
 
     </nav>
 
-    <a
-      class="nav-button"
-      href="#studio"
-    >
-      Start Creating
-    </a>
+
+    <!-- =========================================
+         ACCOUNT NAVIGATION
+         ========================================= -->
+
+    <div class="nav-account">
+
+      <button
+        id="login-button"
+        class="nav-account-button"
+        type="button"
+      >
+        Log In
+      </button>
+
+
+      <button
+        id="account-button"
+        class="nav-account-button hidden"
+        type="button"
+      >
+        My Account
+      </button>
+
+
+      <a
+        class="nav-button"
+        href="#studio"
+      >
+        Start Creating
+      </a>
+
+    </div>
 
   </header>
 
@@ -91,10 +122,12 @@
           AI CREATIVE STUDIO
         </span>
 
+
         <h1>
           Turn your ideas into
           <span>images and video.</span>
         </h1>
+
 
         <p>
           Create stunning visuals from simple prompts.
@@ -102,6 +135,7 @@
           images, animate still images, and produce engaging
           videos from one simple workspace.
         </p>
+
 
         <div class="hero-actions">
 
@@ -111,6 +145,7 @@
           >
             Create with DuncanAI
           </a>
+
 
           <a
             class="secondary"
@@ -130,6 +165,7 @@
 
         <div class="orb orb-two"></div>
 
+
         <div class="hero-panel">
 
           <div class="panel-top">
@@ -144,11 +180,14 @@
 
           </div>
 
+
           <div class="preview"></div>
+
 
           <div class="prompt-line">
             “A cinematic African sunset over a modern city…”
           </div>
+
 
           <div class="progress">
             <span></span>
@@ -176,9 +215,11 @@
           YOUR CREATIVE WORKSPACE
         </span>
 
+
         <h2>
           What do you want to create?
         </h2>
+
 
         <p>
           Choose a workflow. The AI generation engine
@@ -190,7 +231,7 @@
 
       <div class="tool-grid">
 
-        <!-- Create Image -->
+        <!-- CREATE IMAGE -->
 
         <article class="tool-card">
 
@@ -198,13 +239,16 @@
             🎨
           </div>
 
+
           <h3>
             Create Image
           </h3>
 
+
           <p>
             Describe an idea and generate an original image.
           </p>
+
 
           <button
             class="tool-button"
@@ -216,7 +260,7 @@
         </article>
 
 
-        <!-- Image → Video -->
+        <!-- IMAGE → VIDEO -->
 
         <article class="tool-card">
 
@@ -224,14 +268,17 @@
             🖼️
           </div>
 
+
           <h3>
             Image → Video
           </h3>
+
 
           <p>
             Animate a still image with movement and
             cinematic effects.
           </p>
+
 
           <button
             class="tool-button"
@@ -243,7 +290,7 @@
         </article>
 
 
-        <!-- Text → Video -->
+        <!-- TEXT → VIDEO -->
 
         <article class="tool-card">
 
@@ -251,14 +298,17 @@
             🎬
           </div>
 
+
           <h3>
             Text → Video
           </h3>
+
 
           <p>
             Turn a written concept into an engaging
             video sequence.
           </p>
+
 
           <button
             class="tool-button"
@@ -270,7 +320,7 @@
         </article>
 
 
-        <!-- Edit & Enhance -->
+        <!-- EDIT & ENHANCE -->
 
         <article class="tool-card">
 
@@ -278,14 +328,17 @@
             ✨
           </div>
 
+
           <h3>
             Edit & Enhance
           </h3>
+
 
           <p>
             Prepare a future workflow for AI editing,
             upscaling, and transformations.
           </p>
+
 
           <button
             class="tool-button"
@@ -316,15 +369,18 @@
               CREATOR
             </span>
 
+
             <h2 id="creator-title">
               Create Image
             </h2>
 
           </div>
 
+
           <button
             id="close-creator"
             class="close"
+            type="button"
           >
             ×
           </button>
@@ -335,6 +391,7 @@
         <label for="prompt">
           Describe what you want to create
         </label>
+
 
         <textarea
           id="prompt"
@@ -364,6 +421,7 @@
           <button
             id="generate"
             class="primary"
+            type="button"
           >
             Generate
           </button>
@@ -402,9 +460,11 @@
           YOUR CREATIVE LIBRARY
         </span>
 
+
         <h2>
           My Creations
         </h2>
+
 
         <p>
           Your generated images and videos are saved
@@ -426,6 +486,7 @@
             All
           </button>
 
+
           <button
             type="button"
             class="creation-filter-button"
@@ -433,6 +494,7 @@
           >
             Images
           </button>
+
 
           <button
             type="button"
@@ -467,14 +529,17 @@
             ✨
           </div>
 
+
           <h3>
             No creations yet
           </h3>
+
 
           <p>
             Generate an image or video and it will
             appear here.
           </p>
+
 
           <a
             href="#studio"
@@ -502,6 +567,7 @@
           SIMPLE WORKFLOW
         </span>
 
+
         <h2>
           Imagine. Create. Share.
         </h2>
@@ -517,9 +583,11 @@
             01
           </strong>
 
+
           <h3>
             Describe
           </h3>
+
 
           <p>
             Tell DuncanAI what you want in natural language.
@@ -534,9 +602,11 @@
             02
           </strong>
 
+
           <h3>
             Generate
           </h3>
+
 
           <p>
             Connect your preferred AI model to create
@@ -552,9 +622,11 @@
             03
           </strong>
 
+
           <h3>
             Share
           </h3>
+
 
           <p>
             Download and publish your creations anywhere.
@@ -570,6 +642,217 @@
 
 
   <!-- =========================================
+       AUTH MODAL
+       ========================================= -->
+
+  <div
+    id="auth-modal"
+    class="auth-modal hidden"
+  >
+
+    <div
+      class="auth-modal-backdrop"
+      id="auth-modal-backdrop"
+    ></div>
+
+
+    <div
+      class="auth-card"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="auth-title"
+    >
+
+      <button
+        type="button"
+        id="auth-close"
+        class="auth-close"
+        aria-label="Close"
+      >
+        ×
+      </button>
+
+
+      <span class="eyebrow">
+        DUNCANAI ACCOUNT
+      </span>
+
+
+      <h2 id="auth-title">
+        Welcome back
+      </h2>
+
+
+      <p
+        id="auth-description"
+        class="auth-description"
+      >
+        Sign in to save your creations across devices.
+      </p>
+
+
+      <div
+        id="auth-error"
+        class="auth-message auth-error hidden"
+      ></div>
+
+
+      <div
+        id="auth-success"
+        class="auth-message auth-success hidden"
+      ></div>
+
+
+      <!-- LOGIN FORM -->
+
+      <form id="login-form">
+
+        <label for="login-email">
+          Email
+        </label>
+
+
+        <input
+          id="login-email"
+          type="email"
+          autocomplete="email"
+          required
+        />
+
+
+        <label for="login-password">
+          Password
+        </label>
+
+
+        <input
+          id="login-password"
+          type="password"
+          autocomplete="current-password"
+          required
+        />
+
+
+        <button
+          type="submit"
+          class="primary auth-submit"
+        >
+          Log In
+        </button>
+
+      </form>
+
+
+      <!-- SIGNUP FORM -->
+
+      <form
+        id="signup-form"
+        class="hidden"
+      >
+
+        <label for="signup-name">
+          Name
+        </label>
+
+
+        <input
+          id="signup-name"
+          type="text"
+          autocomplete="name"
+          required
+        />
+
+
+        <label for="signup-email">
+          Email
+        </label>
+
+
+        <input
+          id="signup-email"
+          type="email"
+          autocomplete="email"
+          required
+        />
+
+
+        <label for="signup-password">
+          Password
+        </label>
+
+
+        <input
+          id="signup-password"
+          type="password"
+          minlength="8"
+          autocomplete="new-password"
+          required
+        />
+
+
+        <button
+          type="submit"
+          class="primary auth-submit"
+        >
+          Create Account
+        </button>
+
+      </form>
+
+
+      <div class="auth-switch">
+
+        <span id="auth-switch-text">
+          Don't have an account?
+        </span>
+
+
+        <button
+          type="button"
+          id="auth-switch-button"
+          class="auth-switch-button"
+        >
+          Create one
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================================
+       ACCOUNT MENU
+       ========================================= -->
+
+  <div
+    id="account-menu"
+    class="account-menu hidden"
+  >
+
+    <div class="account-menu-inner">
+
+      <div
+        id="account-user-email"
+        class="account-user-email"
+      ></div>
+
+
+      <button
+        type="button"
+        id="logout-button"
+        class="account-menu-button"
+      >
+        Log Out
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================================
        FOOTER
        ========================================= -->
 
@@ -582,11 +865,13 @@
         alt=""
       >
 
+
       <span>
         DuncanAI
       </span>
 
     </div>
+
 
     <p>
       AI Creative Studio • Built for creators
@@ -595,10 +880,15 @@
   </footer>
 
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-config.js"></script>
-<script src="script.js"></script>
-</body>
-</html>
+  <!-- =========================================
+       SCRIPTS
+       ========================================= -->
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script src="supabase-config.js"></script>
+
+  <script src="script.js"></script>
+
 </body>
 </html>
