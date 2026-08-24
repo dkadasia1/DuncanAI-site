@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
+
   // =========================================
   // DUNCANAI ELEMENTS
   // =========================================
@@ -29,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   // =========================================
-  // MY CREATIONS
+  // MY CREATIONS ELEMENTS
   // =========================================
 
   const creationsGrid =
@@ -43,45 +44,66 @@ document.addEventListener("DOMContentLoaded", () => {
       ".creation-filter-button"
     );
 
-  const CREATIONS_KEY =
+
+  // =========================================
+  // STORAGE
+  // =========================================
+
+  const LOCAL_CREATIONS_KEY =
     "duncanai_creations_v1";
 
-  let currentFilter = "all";
+  const MIGRATION_KEY_PREFIX =
+    "duncanai_cloud_migrated_";
 
 
   // =========================================
-  // CREATOR STATE
+  // STATE
   // =========================================
 
   let currentTool = "image";
   let uploadedImage = null;
+  let currentFilter = "all";
+  let currentUser = null;
+  let cloudCreations = [];
+  let cloudMode = false;
 
 
   // =========================================
-  // MY CREATIONS STORAGE
+  // SUPABASE
   // =========================================
 
-  function getCreations() {
+  const supabase =
+    window.supabaseClient || null;
+
+
+  // =========================================
+  // SAFE LOCAL STORAGE
+  // =========================================
+
+  function getLocalCreations() {
+
     try {
-      const raw =
+
+      const saved =
         window.localStorage.getItem(
-          CREATIONS_KEY
+          LOCAL_CREATIONS_KEY
         );
 
-      if (!raw) {
+      if (!saved) {
         return [];
       }
 
       const parsed =
-        JSON.parse(raw);
+        JSON.parse(saved);
 
       return Array.isArray(parsed)
         ? parsed
         : [];
 
     } catch (error) {
+
       console.error(
-        "DuncanAI: failed to read My Creations.",
+        "DuncanAI local storage read error:",
         error
       );
 
@@ -90,32 +112,23 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
-  function writeCreations(creations) {
+  function saveLocalCreations(
+    creations
+  ) {
+
     try {
-      const serialized =
-        JSON.stringify(creations);
 
       window.localStorage.setItem(
-        CREATIONS_KEY,
-        serialized
+        LOCAL_CREATIONS_KEY,
+        JSON.stringify(creations)
       );
-
-      const check =
-        window.localStorage.getItem(
-          CREATIONS_KEY
-        );
-
-      if (check !== serialized) {
-        throw new Error(
-          "Storage verification failed."
-        );
-      }
 
       return true;
 
     } catch (error) {
+
       console.error(
-        "DuncanAI: failed to save My Creations.",
+        "DuncanAI local storage write error:",
         error
       );
 
@@ -124,7 +137,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
-  function showSaveMessage(message) {
+  // =========================================
+  // NOTIFICATIONS
+  // =========================================
+
+  function showSaveMessage(
+    message
+  ) {
+
     const existing =
       document.getElementById(
         "duncanai-save-message"
@@ -134,64 +154,170 @@ document.addEventListener("DOMContentLoaded", () => {
       existing.remove();
     }
 
+
     const messageBox =
       document.createElement("div");
+
 
     messageBox.id =
       "duncanai-save-message";
 
+
     messageBox.textContent =
       message;
+
 
     messageBox.style.cssText = `
       position: fixed;
       right: 24px;
       bottom: 24px;
       z-index: 9999;
-      max-width: 340px;
+      max-width: 360px;
       padding: 14px 18px;
       border-radius: 12px;
-      background: rgba(16,24,39,.96);
+      background: rgba(16,24,39,.97);
       color: #f8fafc;
       border: 1px solid rgba(255,255,255,.12);
       box-shadow: 0 20px 50px rgba(0,0,0,.35);
       font-size: 14px;
       font-weight: 700;
+      line-height: 1.5;
     `;
+
 
     document.body.appendChild(
       messageBox
     );
 
+
     setTimeout(() => {
-      messageBox.remove();
+
+      if (messageBox) {
+        messageBox.remove();
+      }
+
     }, 3500);
   }
 
 
-  function saveCreation({
+  // =========================================
+  // AUTH USER
+  // =========================================
+
+  async function getCurrentUser() {
+
+    if (!supabase) {
+      return null;
+    }
+
+    try {
+
+      const {
+        data,
+        error
+      } =
+        await supabase.auth.getUser();
+
+
+      if (error) {
+        throw error;
+      }
+
+
+      return data?.user || null;
+
+    } catch (error) {
+
+      console.error(
+        "DuncanAI user lookup error:",
+        error
+      );
+
+      return null;
+    }
+  }
+
+
+  // =========================================
+  // LOAD CLOUD CREATIONS
+  // =========================================
+
+  async function loadCloudCreations() {
+
+    if (!supabase || !currentUser) {
+      return [];
+    }
+
+
+    try {
+
+      const {
+        data,
+        error
+      } =
+        await supabase
+          .from("creations")
+          .select(
+            "id,user_id,type,url,prompt,aspect_ratio,created_at"
+          )
+          .order(
+            "created_at",
+            {
+              ascending: false
+            }
+          );
+
+
+      if (error) {
+        throw error;
+      }
+
+
+      cloudCreations =
+        Array.isArray(data)
+          ? data
+          : [];
+
+
+      cloudMode = true;
+
+
+      return cloudCreations;
+
+    } catch (error) {
+
+      console.error(
+        "DuncanAI cloud creations load error:",
+        error
+      );
+
+
+      cloudMode = false;
+
+
+      showSaveMessage(
+        "Cloud library could not be loaded. Using local creations."
+      );
+
+
+      return [];
+    }
+  }
+
+
+  // =========================================
+  // SAVE LOCAL CREATION
+  // =========================================
+
+  function saveLocalCreation({
     type,
     url,
     prompt,
     aspectRatio
   }) {
-    if (!type || !url) {
-      console.error(
-        "DuncanAI: saveCreation received invalid data.",
-        {
-          type,
-          url
-        }
-      );
-
-      showSaveMessage(
-        "⚠️ Creation could not be saved."
-      );
-
-      return false;
-    }
 
     const creation = {
+
       id:
         `${Date.now()}-${Math.random()
           .toString(36)
@@ -213,105 +339,568 @@ document.addEventListener("DOMContentLoaded", () => {
         new Date().toISOString()
     };
 
+
     const existing =
-      getCreations();
+      getLocalCreations();
+
 
     const updated = [
       creation,
       ...existing
-    ].slice(0, 50);
+    ].slice(
+      0,
+      50
+    );
+
 
     const saved =
-      writeCreations(
+      saveLocalCreations(
         updated
       );
 
-    if (!saved) {
+
+    if (saved) {
+      renderCreations();
+    }
+
+
+    return saved;
+  }
+
+
+  // =========================================
+  // SAVE CLOUD CREATION
+  // =========================================
+
+  async function saveCloudCreation({
+    type,
+    url,
+    prompt,
+    aspectRatio
+  }) {
+
+    if (
+      !supabase ||
+      !currentUser
+    ) {
+      return false;
+    }
+
+
+    try {
+
+      const {
+        data,
+        error
+      } =
+        await supabase
+          .from("creations")
+          .insert({
+            user_id:
+              currentUser.id,
+
+            type,
+
+            url,
+
+            prompt:
+              prompt ||
+              "DuncanAI creation",
+
+            aspect_ratio:
+              aspectRatio ||
+              "16:9"
+          })
+          .select()
+          .single();
+
+
+      if (error) {
+        throw error;
+      }
+
+
+      if (data) {
+
+        cloudCreations = [
+          data,
+          ...cloudCreations
+        ];
+
+      }
+
+
+      cloudMode = true;
+
+
+      renderCreations();
+
+
       showSaveMessage(
-        "⚠️ Your creation was generated, but this browser blocked saving it."
+        type === "image"
+          ? "✓ Image saved to your cloud library"
+          : "✓ Video saved to your cloud library"
+      );
+
+
+      return true;
+
+    } catch (error) {
+
+      console.error(
+        "DuncanAI cloud creation save error:",
+        error
+      );
+
+
+      return false;
+    }
+  }
+
+
+  // =========================================
+  // SAVE CREATION
+  // =========================================
+
+  async function saveCreation({
+    type,
+    url,
+    prompt,
+    aspectRatio
+  }) {
+
+    if (!type || !url) {
+
+      console.error(
+        "DuncanAI: invalid creation data."
       );
 
       return false;
     }
 
-    const verified =
-      getCreations().some(
-        (item) =>
-          item.id ===
-          creation.id
-      );
 
-    if (!verified) {
+    // Always keep a local backup.
+    saveLocalCreation({
+      type,
+      url,
+      prompt,
+      aspectRatio
+    });
+
+
+    // Signed-in users go to Supabase.
+    if (
+      currentUser &&
+      supabase
+    ) {
+
+      const cloudSaved =
+        await saveCloudCreation({
+          type,
+          url,
+          prompt,
+          aspectRatio
+        });
+
+
+      if (cloudSaved) {
+        return true;
+      }
+
+
       showSaveMessage(
-        "⚠️ The creation was generated, but saving could not be verified."
+        "✓ Creation saved locally. Cloud save failed."
       );
 
-      return false;
+
+      return true;
     }
 
-    renderCreations();
 
+    // Signed-out users remain local.
     showSaveMessage(
-      type === "image"
-        ? "✓ Image saved to My Creations"
-        : "✓ Video saved to My Creations"
+      "✓ Creation saved on this device"
     );
+
 
     return true;
   }
 
 
-  function deleteCreation(id) {
-    const existing =
-      getCreations();
+  // =========================================
+  // MIGRATE LOCAL CREATIONS
+  // =========================================
 
-    const updated =
-      existing.filter(
-        (item) =>
-          item.id !== id
-      );
+  async function migrateLocalCreations() {
 
-    writeCreations(
-      updated
-    );
-
-    renderCreations();
-  }
-
-
-  function clearAllCreations() {
-    const existing =
-      getCreations();
-
-    if (existing.length === 0) {
+    if (
+      !currentUser ||
+      !supabase
+    ) {
       return;
     }
 
+
+    const migrationKey =
+      MIGRATION_KEY_PREFIX +
+      currentUser.id;
+
+
+    try {
+
+      if (
+        window.localStorage.getItem(
+          migrationKey
+        ) === "done"
+      ) {
+        return;
+      }
+
+    } catch {
+      // Continue without migration flag.
+    }
+
+
+    const localCreations =
+      getLocalCreations();
+
+
+    if (
+      localCreations.length === 0
+    ) {
+
+      try {
+
+        window.localStorage.setItem(
+          migrationKey,
+          "done"
+        );
+
+      } catch {}
+
+      return;
+    }
+
+
+    let migratedCount = 0;
+
+
+    for (
+      const creation
+      of localCreations
+    ) {
+
+      try {
+
+        const {
+          error
+        } =
+          await supabase
+            .from("creations")
+            .insert({
+              user_id:
+                currentUser.id,
+
+              type:
+                creation.type,
+
+              url:
+                creation.url,
+
+              prompt:
+                creation.prompt ||
+                "DuncanAI creation",
+
+              aspect_ratio:
+                creation.aspectRatio ||
+                "16:9",
+
+              created_at:
+                creation.createdAt ||
+                new Date().toISOString()
+            });
+
+
+        if (!error) {
+          migratedCount++;
+        }
+
+      } catch (error) {
+
+        console.error(
+          "DuncanAI migration error:",
+          error
+        );
+      }
+    }
+
+
+    await loadCloudCreations();
+
+
+    try {
+
+      window.localStorage.setItem(
+        migrationKey,
+        "done"
+      );
+
+    } catch {}
+
+
+    if (
+      migratedCount > 0
+    ) {
+
+      showSaveMessage(
+        `${migratedCount} creation${
+          migratedCount === 1
+            ? ""
+            : "s"
+        } moved to your cloud library`
+      );
+    }
+  }
+
+
+  // =========================================
+  // DELETE CLOUD CREATION
+  // =========================================
+
+  async function deleteCloudCreation(
+    id
+  ) {
+
+    if (
+      !supabase ||
+      !currentUser
+    ) {
+      return false;
+    }
+
+
+    try {
+
+      const {
+        error
+      } =
+        await supabase
+          .from("creations")
+          .delete()
+          .eq(
+            "id",
+            id
+          );
+
+
+      if (error) {
+        throw error;
+      }
+
+
+      cloudCreations =
+        cloudCreations.filter(
+          (creation) =>
+            creation.id !== id
+        );
+
+
+      renderCreations();
+
+
+      showSaveMessage(
+        "Creation deleted"
+      );
+
+
+      return true;
+
+    } catch (error) {
+
+      console.error(
+        "DuncanAI cloud deletion error:",
+        error
+      );
+
+
+      showSaveMessage(
+        "Unable to delete that creation."
+      );
+
+
+      return false;
+    }
+  }
+
+
+  // =========================================
+  // DELETE LOCAL CREATION
+  // =========================================
+
+  function deleteLocalCreation(
+    id
+  ) {
+
+    const existing =
+      getLocalCreations();
+
+
+    const updated =
+      existing.filter(
+        (creation) =>
+          creation.id !== id
+      );
+
+
+    saveLocalCreations(
+      updated
+    );
+  }
+
+
+  // =========================================
+  // DELETE CREATION
+  // =========================================
+
+  async function deleteCreation(
+    id,
+    source
+  ) {
+
+    if (
+      source === "cloud"
+    ) {
+
+      await deleteCloudCreation(
+        id
+      );
+
+      return;
+    }
+
+
+    deleteLocalCreation(
+      id
+    );
+
+
+    renderCreations();
+
+
+    showSaveMessage(
+      "Creation deleted"
+    );
+  }
+
+
+  // =========================================
+  // CLEAR ALL CREATIONS
+  // =========================================
+
+  async function clearAllCreations() {
+
     const confirmed =
       window.confirm(
-        "Delete all saved DuncanAI creations from this device?"
+        currentUser
+          ? "Delete all of your cloud creations?"
+          : "Delete all saved creations from this device?"
       );
+
 
     if (!confirmed) {
       return;
     }
 
-    try {
-      window.localStorage.removeItem(
-        CREATIONS_KEY
-      );
-    } catch (error) {
-      console.error(
-        "DuncanAI: failed to clear My Creations.",
-        error
-      );
+
+    if (
+      currentUser &&
+      supabase
+    ) {
+
+      try {
+
+        const {
+          error
+        } =
+          await supabase
+            .from("creations")
+            .delete()
+            .eq(
+              "user_id",
+              currentUser.id
+            );
+
+
+        if (error) {
+          throw error;
+        }
+
+
+        cloudCreations = [];
+
+
+        renderCreations();
+
+
+        showSaveMessage(
+          "Your cloud creations were cleared."
+        );
+
+
+        return;
+
+      } catch (error) {
+
+        console.error(
+          "DuncanAI cloud clear error:",
+          error
+        );
+
+
+        showSaveMessage(
+          "Unable to clear your cloud creations."
+        );
+
+
+        return;
+      }
     }
+
+
+    try {
+
+      window.localStorage.removeItem(
+        LOCAL_CREATIONS_KEY
+      );
+
+    } catch {}
+
 
     renderCreations();
 
+
     showSaveMessage(
-      "My Creations has been cleared."
+      "Local creations were cleared."
     );
+  }
+
+
+  // =========================================
+  // ACTIVE CREATIONS
+  // =========================================
+
+  function getActiveCreations() {
+
+    if (
+      currentUser &&
+      cloudMode
+    ) {
+
+      return cloudCreations;
+    }
+
+
+    return getLocalCreations();
   }
 
 
@@ -320,23 +909,35 @@ document.addEventListener("DOMContentLoaded", () => {
   // =========================================
 
   function renderCreations() {
+
     if (!creationsGrid) {
       return;
     }
 
-    const creations =
-      getCreations();
 
-    const filtered =
-      currentFilter === "all"
-        ? creations
-        : creations.filter(
-            (creation) =>
-              creation.type ===
-              currentFilter
-          );
+    let creations =
+      getActiveCreations();
 
-    if (filtered.length === 0) {
+
+    if (
+      currentFilter !==
+      "all"
+    ) {
+
+      creations =
+        creations.filter(
+          (creation) =>
+            creation.type ===
+            currentFilter
+        );
+    }
+
+
+    if (
+      creations.length ===
+      0
+    ) {
+
       creationsGrid.innerHTML = `
         <div class="creations-empty">
 
@@ -346,17 +947,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
           <h3>
             ${
-              creations.length === 0
-                ? "No creations yet"
-                : "Nothing here yet"
+              currentUser
+                ? "No cloud creations yet"
+                : "No creations yet"
             }
           </h3>
 
           <p>
             ${
-              creations.length === 0
-                ? "Generate an image or video and it will appear here."
-                : "No creations match this filter."
+              currentUser
+                ? "Your generated images and videos will appear here."
+                : "Generate an image or video and it will appear here."
             }
           </p>
 
@@ -373,8 +974,9 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+
     creationsGrid.innerHTML =
-      filtered
+      creations
         .map(
           (creation) =>
             renderCreationCard(
@@ -383,17 +985,33 @@ document.addEventListener("DOMContentLoaded", () => {
         )
         .join("");
 
+
     attachCreationActions();
   }
 
 
+  // =========================================
+  // CREATION CARD
+  // =========================================
+
   function renderCreationCard(
     creation
   ) {
+
+    const isCloud =
+      Boolean(
+        currentUser &&
+        cloudMode &&
+        creation.user_id
+      );
+
+
     const typeLabel =
-      creation.type === "image"
+      creation.type ===
+      "image"
         ? "Image"
         : "Video";
+
 
     const prompt =
       truncateText(
@@ -402,16 +1020,26 @@ document.addEventListener("DOMContentLoaded", () => {
         120
       );
 
+
+    const createdAt =
+      creation.created_at ||
+      creation.createdAt;
+
+
     const date =
       formatDate(
-        creation.createdAt
+        createdAt
       );
+
 
     let media;
 
+
     if (
-      creation.type === "image"
+      creation.type ===
+      "image"
     ) {
+
       media = `
         <img
           src="${escapeHtml(
@@ -423,13 +1051,16 @@ document.addEventListener("DOMContentLoaded", () => {
           loading="lazy"
         />
       `;
+
     } else {
+
       media = `
         <video
           controls
           preload="metadata"
           playsinline
         >
+
           <source
             src="${escapeHtml(
               creation.url
@@ -439,9 +1070,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
           Your browser does not support
           video playback.
+
         </video>
       `;
     }
+
 
     return `
       <article
@@ -455,11 +1088,13 @@ document.addEventListener("DOMContentLoaded", () => {
           ${media}
         </div>
 
+
         <div class="creation-info">
 
           <div class="creation-type">
             ${typeLabel}
           </div>
+
 
           <div class="creation-prompt">
             ${escapeHtml(
@@ -467,11 +1102,13 @@ document.addEventListener("DOMContentLoaded", () => {
             )}
           </div>
 
+
           <div class="creation-date">
             ${escapeHtml(
               date
             )}
           </div>
+
 
           <div class="creation-actions">
 
@@ -486,12 +1123,14 @@ document.addEventListener("DOMContentLoaded", () => {
               Open
             </a>
 
+
             <a
               href="${escapeHtml(
                 creation.url
               )}"
               download="${
-                creation.type === "image"
+                creation.type ===
+                "image"
                   ? "duncanai-image.png"
                   : "duncanai-video.mp4"
               }"
@@ -500,12 +1139,18 @@ document.addEventListener("DOMContentLoaded", () => {
               Download
             </a>
 
+
             <button
               type="button"
               class="creation-action delete"
               data-delete-id="${escapeHtml(
                 creation.id
               )}"
+              data-delete-source="${
+                isCloud
+                  ? "cloud"
+                  : "local"
+              }"
             >
               Delete
             </button>
@@ -519,19 +1164,36 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
+  // =========================================
+  // DELETE BUTTONS
+  // =========================================
+
   function attachCreationActions() {
+
     const buttons =
       document.querySelectorAll(
         "[data-delete-id]"
       );
 
+
     buttons.forEach(
       (button) => {
+
         button.addEventListener(
           "click",
-          () => {
-            deleteCreation(
-              button.dataset.deleteId
+          async () => {
+
+            const id =
+              button.dataset.deleteId;
+
+            const source =
+              button.dataset.deleteSource ||
+              "local";
+
+
+            await deleteCreation(
+              id,
+              source
             );
           }
         );
@@ -540,30 +1202,50 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
-  function formatDate(value) {
+  // =========================================
+  // DATE
+  // =========================================
+
+  function formatDate(
+    value
+  ) {
+
     try {
+
       return new Date(
         value
       ).toLocaleString();
+
     } catch {
+
       return "Recently created";
     }
   }
 
 
+  // =========================================
+  // TRUNCATE
+  // =========================================
+
   function truncateText(
     value,
     maxLength
   ) {
+
     const text =
-      String(value || "");
+      String(
+        value || ""
+      );
+
 
     if (
       text.length <=
       maxLength
     ) {
+
       return text;
     }
+
 
     return (
       text.slice(
@@ -575,26 +1257,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   // =========================================
-  // MY CREATIONS FILTERS
+  // FILTERS
   // =========================================
 
   creationFilterButtons.forEach(
     (button) => {
+
       button.addEventListener(
         "click",
         () => {
+
           currentFilter =
             button.dataset.filter ||
             "all";
 
+
           creationFilterButtons.forEach(
             (item) => {
+
               item.classList.toggle(
                 "active",
                 item === button
               );
             }
           );
+
 
           renderCreations();
         }
@@ -603,7 +1290,10 @@ document.addEventListener("DOMContentLoaded", () => {
   );
 
 
-  if (clearCreationsButton) {
+  if (
+    clearCreationsButton
+  ) {
+
     clearCreationsButton.addEventListener(
       "click",
       clearAllCreations
@@ -617,25 +1307,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
   toolButtons.forEach(
     (button) => {
+
       button.addEventListener(
         "click",
         () => {
+
           currentTool =
             button.dataset.tool;
+
 
           creator.classList.remove(
             "hidden"
           );
 
+
           if (
             currentTool ===
             "image"
           ) {
+
             creatorTitle.textContent =
               "Create Image";
 
+
             promptInput.placeholder =
               "Example: A cinematic sunrise over the African savanna, dramatic clouds, warm light...";
+
 
             result.innerHTML = `
               <div class="result-placeholder">
@@ -649,11 +1346,14 @@ document.addEventListener("DOMContentLoaded", () => {
             currentTool ===
             "image-video"
           ) {
+
             creatorTitle.textContent =
               "Image → Video";
 
+
             promptInput.placeholder =
               "Describe the movement you want: slowly move the camera toward the subject, gentle wind moving hair, natural waves...";
+
 
             showImageVideoInterface();
           }
@@ -663,11 +1363,14 @@ document.addEventListener("DOMContentLoaded", () => {
             currentTool ===
             "video"
           ) {
+
             creatorTitle.textContent =
               "Text → Video";
 
+
             promptInput.placeholder =
               "Example: A cinematic drone shot flying over the African savanna at golden hour, dramatic clouds, realistic movement...";
+
 
             showTextVideoInterface();
           }
@@ -677,8 +1380,10 @@ document.addEventListener("DOMContentLoaded", () => {
             currentTool ===
             "edit"
           ) {
+
             creatorTitle.textContent =
               "Edit & Enhance";
+
 
             result.innerHTML = `
               <div class="result-placeholder">
@@ -714,15 +1419,20 @@ document.addEventListener("DOMContentLoaded", () => {
   // CLOSE CREATOR
   // =========================================
 
-  if (closeCreator) {
+  if (
+    closeCreator
+  ) {
+
     closeCreator.addEventListener(
       "click",
       () => {
+
         creator.classList.add(
           "hidden"
         );
 
-        uploadedImage = null;
+        uploadedImage =
+          null;
       }
     );
   }
@@ -733,7 +1443,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // =========================================
 
   function showImageVideoInterface() {
-    uploadedImage = null;
+
+    uploadedImage =
+      null;
+
 
     result.innerHTML = `
       <div class="video-workspace">
@@ -746,6 +1459,7 @@ document.addEventListener("DOMContentLoaded", () => {
             accept="image/png,image/jpeg,image/webp"
           />
 
+
           <label
             for="video-image-upload"
             class="upload-label"
@@ -753,9 +1467,11 @@ document.addEventListener("DOMContentLoaded", () => {
             🖼️ Choose an image
           </label>
 
+
           <div
             id="image-preview"
           ></div>
+
 
           <p class="upload-help">
             Upload an image you want DuncanAI to animate.
@@ -767,12 +1483,17 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     `;
 
+
     const uploadInput =
       document.getElementById(
         "video-image-upload"
       );
 
-    if (uploadInput) {
+
+    if (
+      uploadInput
+    ) {
+
       uploadInput.addEventListener(
         "change",
         handleImageUpload
@@ -786,7 +1507,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // =========================================
 
   function showTextVideoInterface() {
-    uploadedImage = null;
+
+    uploadedImage =
+      null;
+
 
     result.innerHTML = `
       <div class="video-workspace">
@@ -797,10 +1521,12 @@ document.addEventListener("DOMContentLoaded", () => {
             🎬 Create Video From Text
           </h3>
 
+
           <p>
             Describe the scene, camera movement,
             subjects, atmosphere, and visual style.
           </p>
+
 
           <div
             class="video-source-card"
@@ -811,6 +1537,7 @@ document.addEventListener("DOMContentLoaded", () => {
               💡 Prompt examples
             </div>
 
+
             <p
               style="
                 text-align:left;
@@ -820,6 +1547,7 @@ document.addEventListener("DOMContentLoaded", () => {
               • Cinematic drone shot over a modern city at sunrise.
             </p>
 
+
             <p
               style="
                 text-align:left;
@@ -828,6 +1556,7 @@ document.addEventListener("DOMContentLoaded", () => {
             >
               • A woman walking along the ocean while waves move naturally.
             </p>
+
 
             <p
               style="
@@ -851,56 +1580,76 @@ document.addEventListener("DOMContentLoaded", () => {
   // IMAGE UPLOAD
   // =========================================
 
-  function handleImageUpload(event) {
+  function handleImageUpload(
+    event
+  ) {
+
     const file =
       event.target.files?.[0];
+
 
     if (!file) {
       return;
     }
+
 
     if (
       !file.type.startsWith(
         "image/"
       )
     ) {
+
       alert(
         "Please select an image file."
       );
 
-      event.target.value = "";
+
+      event.target.value =
+        "";
+
 
       return;
     }
+
 
     if (
       file.size >
       5 * 1024 * 1024
     ) {
+
       alert(
         "Please choose an image smaller than 5 MB."
       );
 
-      event.target.value = "";
+
+      event.target.value =
+        "";
+
 
       return;
     }
 
+
     const reader =
       new FileReader();
 
+
     reader.onload = () => {
+
       uploadedImage =
         reader.result;
+
 
       const preview =
         document.getElementById(
           "image-preview"
         );
 
+
       if (!preview) {
         return;
       }
+
 
       preview.innerHTML = `
         <div class="video-source-card">
@@ -908,6 +1657,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="video-source-title">
             🖼️ Source Image
           </div>
+
 
           <img
             src="${escapeHtml(
@@ -921,8 +1671,12 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
     };
 
+
     reader.onerror = () => {
-      uploadedImage = null;
+
+      uploadedImage =
+        null;
+
 
       result.innerHTML = `
         <div class="error">
@@ -932,7 +1686,10 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
     };
 
-    reader.readAsDataURL(file);
+
+    reader.readAsDataURL(
+      file
+    );
   }
 
 
@@ -940,7 +1697,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // GENERATE BUTTON
   // =========================================
 
-  if (generateButton) {
+  if (
+    generateButton
+  ) {
+
     generateButton.addEventListener(
       "click",
       async () => {
@@ -949,7 +1709,9 @@ document.addEventListener("DOMContentLoaded", () => {
           currentTool ===
           "image"
         ) {
+
           await generateImage();
+
           return;
         }
 
@@ -958,7 +1720,9 @@ document.addEventListener("DOMContentLoaded", () => {
           currentTool ===
           "image-video"
         ) {
+
           await generateImageVideo();
+
           return;
         }
 
@@ -967,7 +1731,9 @@ document.addEventListener("DOMContentLoaded", () => {
           currentTool ===
           "video"
         ) {
+
           await generateTextVideo();
+
           return;
         }
 
@@ -976,12 +1742,14 @@ document.addEventListener("DOMContentLoaded", () => {
           currentTool ===
           "edit"
         ) {
+
           result.innerHTML = `
             <div class="result-placeholder">
 
               <strong>
                 ✨ Edit & Enhance
               </strong>
+
 
               <p
                 style="margin-top:8px;"
@@ -1002,25 +1770,32 @@ document.addEventListener("DOMContentLoaded", () => {
   // =========================================
 
   async function generateImage() {
+
     const prompt =
       promptInput.value.trim();
 
+
     if (
-      prompt.length < 5
+      prompt.length <
+      5
     ) {
+
       result.innerHTML = `
         <div class="error">
           Please enter a description of at least 5 characters.
         </div>
       `;
 
+
       return;
     }
+
 
     if (
       prompt.length >
       32000
     ) {
+
       result.innerHTML = `
         <div class="error">
           Your prompt is too long.
@@ -1028,17 +1803,22 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       `;
 
+
       return;
     }
 
+
     const aspectRatio =
       getAspectRatio();
+
 
     setStandardLoading(
       "Creating your image..."
     );
 
+
     try {
+
       const response =
         await fetch(
           "/api/generate",
@@ -1059,28 +1839,34 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         );
 
+
       const data =
         await readJsonResponse(
           response
         );
 
+
       if (
         !response.ok ||
         data.error
       ) {
+
         throw new Error(
           data.error ||
           "Image generation failed."
         );
       }
 
+
       if (
         !data.imageUrl
       ) {
+
         throw new Error(
           "No image was returned."
         );
       }
+
 
       result.innerHTML = `
         <div class="generated-result">
@@ -1097,6 +1883,7 @@ document.addEventListener("DOMContentLoaded", () => {
             )}"
           />
 
+
           <a
             href="${escapeHtml(
               data.imageUrl
@@ -1110,7 +1897,8 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       `;
 
-      saveCreation({
+
+      await saveCreation({
         type:
           "image",
 
@@ -1122,13 +1910,17 @@ document.addEventListener("DOMContentLoaded", () => {
         aspectRatio
       });
 
+
     } catch (error) {
+
       result.innerHTML = `
         <div class="error">
+
           ❌ ${escapeHtml(
             error.message ||
             "Something went wrong."
           )}
+
         </div>
       `;
     }
@@ -1140,22 +1932,29 @@ document.addEventListener("DOMContentLoaded", () => {
   // =========================================
 
   async function generateImageVideo() {
+
     if (!uploadedImage) {
+
       result.innerHTML = `
         <div class="error">
           Please upload an image first.
         </div>
       `;
 
+
       return;
     }
+
 
     const prompt =
       promptInput.value.trim();
 
+
     if (
-      prompt.length < 5
+      prompt.length <
+      5
     ) {
+
       result.innerHTML = `
         <div class="error">
           Please describe the movement you want
@@ -1163,36 +1962,46 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       `;
 
+
       return;
     }
+
 
     if (
       prompt.length >
       1000
     ) {
+
       result.innerHTML = `
         <div class="error">
           Video prompts must be under 1,000 characters.
         </div>
       `;
 
+
       return;
     }
 
+
     const aspectRatio =
       getAspectRatio();
+
 
     setVideoLoading(
       "Sending your image to DuncanAI..."
     );
 
+
     generateButton.disabled =
       true;
+
 
     generateButton.textContent =
       "Creating...";
 
+
     try {
+
       const response =
         await fetch(
           "/api/image-to-video",
@@ -1220,28 +2029,34 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         );
 
+
       const data =
         await readJsonResponse(
           response
         );
 
+
       if (
         !response.ok ||
         data.error
       ) {
+
         throw new Error(
           data.error ||
           "Unable to start video generation."
         );
       }
 
+
       if (
         !data.taskId
       ) {
+
         throw new Error(
           "Runway did not return a video task ID."
         );
       }
+
 
       await pollVideoStatus(
         data.taskId,
@@ -1251,19 +2066,26 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       );
 
+
     } catch (error) {
+
       result.innerHTML = `
         <div class="error">
+
           ❌ ${escapeHtml(
             error.message ||
             "Something went wrong while creating the video."
           )}
+
         </div>
       `;
 
+
     } finally {
+
       generateButton.disabled =
         false;
+
 
       generateButton.textContent =
         "Generate";
@@ -1276,41 +2098,52 @@ document.addEventListener("DOMContentLoaded", () => {
   // =========================================
 
   async function generateTextVideo() {
+
     const prompt =
       promptInput.value.trim();
 
+
     if (
-      prompt.length < 5
+      prompt.length <
+      5
     ) {
+
       result.innerHTML = `
         <div class="error">
           Please describe the video you want to create.
         </div>
       `;
 
+
       return;
     }
+
 
     if (
       prompt.length >
       1000
     ) {
+
       result.innerHTML = `
         <div class="error">
           Video prompts must be under 1,000 characters.
         </div>
       `;
 
+
       return;
     }
 
+
     const aspectRatio =
       getAspectRatio();
+
 
     if (
       aspectRatio ===
       "1:1"
     ) {
+
       result.innerHTML = `
         <div class="error">
           Text → Video currently supports
@@ -1318,20 +2151,26 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       `;
 
+
       return;
     }
+
 
     setVideoLoading(
       "Sending your text prompt to DuncanAI..."
     );
 
+
     generateButton.disabled =
       true;
+
 
     generateButton.textContent =
       "Creating...";
 
+
     try {
+
       const response =
         await fetch(
           "/api/text-to-video",
@@ -1347,35 +2186,43 @@ document.addEventListener("DOMContentLoaded", () => {
             body:
               JSON.stringify({
                 prompt,
+
                 aspectRatio,
+
                 duration:
                   5
               })
           }
         );
 
+
       const data =
         await readJsonResponse(
           response
         );
 
+
       if (
         !response.ok ||
         data.error
       ) {
+
         throw new Error(
           data.error ||
           "Unable to start text-to-video generation."
         );
       }
 
+
       if (
         !data.taskId
       ) {
+
         throw new Error(
           "Runway did not return a video task ID."
         );
       }
+
 
       await pollVideoStatus(
         data.taskId,
@@ -1385,19 +2232,26 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       );
 
+
     } catch (error) {
+
       result.innerHTML = `
         <div class="error">
+
           ❌ ${escapeHtml(
             error.message ||
             "Something went wrong while creating the video."
           )}
+
         </div>
       `;
 
+
     } finally {
+
       generateButton.disabled =
         false;
+
 
       generateButton.textContent =
         "Generate";
@@ -1413,39 +2267,56 @@ document.addEventListener("DOMContentLoaded", () => {
     taskId,
     creationInfo = {}
   ) {
+
     const maxAttempts =
       60;
+
 
     for (
       let attempts = 1;
       attempts <= maxAttempts;
       attempts++
     ) {
+
       let message =
         "Preparing your video...";
 
+
       if (
-        attempts <= 2
+        attempts <=
+        2
       ) {
+
         message =
           "Preparing your video...";
+
       } else if (
-        attempts <= 8
+        attempts <=
+        8
       ) {
+
         message =
           "Generating your video...";
+
       } else {
+
         message =
           "Finalizing your video...";
       }
+
 
       setVideoLoading(
         `${message} (${attempts}/${maxAttempts})`
       );
 
-      await wait(5000);
+
+      await wait(
+        5000
+      );
+
 
       try {
+
         const response =
           await fetch(
             `/api/video-status?taskId=${encodeURIComponent(
@@ -1453,50 +2324,61 @@ document.addEventListener("DOMContentLoaded", () => {
             )}&_=${Date.now()}`
           );
 
+
         const data =
           await readJsonResponse(
             response
           );
 
+
         if (
           !response.ok ||
           data.error
         ) {
+
           throw new Error(
             data.error ||
             "Unable to check video status."
           );
         }
 
+
         console.log(
           "DuncanAI video status:",
           data.status
         );
 
+
         if (
           data.status ===
           "SUCCEEDED"
         ) {
+
           if (
             !data.videoUrl
           ) {
+
             throw new Error(
               "Runway completed the video but did not return a video URL."
             );
           }
 
-          showGeneratedVideo(
+
+          await showGeneratedVideo(
             data.videoUrl,
             creationInfo
           );
 
+
           return;
         }
+
 
         if (
           data.status ===
           "FAILED"
         ) {
+
           throw new Error(
             data.error ||
             "Runway video generation failed."
@@ -1504,23 +2386,30 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
       } catch (error) {
+
         result.innerHTML = `
           <div class="error">
+
             ❌ ${escapeHtml(
               error.message ||
               "Unable to check video status."
             )}
+
           </div>
         `;
+
 
         return;
       }
     }
 
+
     result.innerHTML = `
       <div class="error">
+
         ❌ Video generation is taking longer
         than expected. Please try again.
+
       </div>
     `;
   }
@@ -1530,10 +2419,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // SHOW GENERATED VIDEO
   // =========================================
 
-  function showGeneratedVideo(
+  async function showGeneratedVideo(
     videoUrl,
     creationInfo = {}
   ) {
+
     result.innerHTML = `
       <div class="video-workspace">
 
@@ -1543,12 +2433,14 @@ document.addEventListener("DOMContentLoaded", () => {
             🎬 Your DuncanAI video is ready
           </div>
 
+
           <video
             controls
             playsinline
             preload="metadata"
             class="video-result-player"
           >
+
             <source
               src="${escapeHtml(
                 videoUrl
@@ -1556,13 +2448,17 @@ document.addEventListener("DOMContentLoaded", () => {
               type="video/mp4"
             />
 
+
             Your browser does not support
             video playback.
+
           </video>
+
 
           <div class="video-success">
             ✓ Video generated successfully
           </div>
+
 
           <div class="video-result-actions">
 
@@ -1577,6 +2473,7 @@ document.addEventListener("DOMContentLoaded", () => {
               ↗ Open Video
             </a>
 
+
             <a
               href="${escapeHtml(
                 videoUrl
@@ -1586,6 +2483,7 @@ document.addEventListener("DOMContentLoaded", () => {
             >
               ⬇ Download Video
             </a>
+
 
             <button
               type="button"
@@ -1602,7 +2500,8 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     `;
 
-    saveCreation({
+
+    await saveCreation({
       type:
         "video",
 
@@ -1624,24 +2523,35 @@ document.addEventListener("DOMContentLoaded", () => {
         "create-another-video"
       );
 
-    if (newVideoButton) {
+
+    if (
+      newVideoButton
+    ) {
+
       newVideoButton.addEventListener(
         "click",
         () => {
+
           uploadedImage =
             null;
 
+
           promptInput.value =
             "";
+
 
           if (
             currentTool ===
             "image-video"
           ) {
+
             showImageVideoInterface();
+
           } else {
+
             showTextVideoInterface();
           }
+
 
           promptInput.focus();
         }
@@ -1654,15 +2564,22 @@ document.addEventListener("DOMContentLoaded", () => {
         ".video-result-player"
       );
 
-    if (video) {
+
+    if (
+      video
+    ) {
+
       video.addEventListener(
         "error",
         () => {
+
           result.innerHTML = `
             <div class="error">
+
               ❌ The video was generated, but
               your browser could not play it.
               Try "Open Video".
+
             </div>
           `;
         }
@@ -1676,25 +2593,31 @@ document.addEventListener("DOMContentLoaded", () => {
   // =========================================
 
   function getAspectRatio() {
+
     const value =
       aspectSelect?.value ||
       "";
+
 
     if (
       value.includes(
         "1:1"
       )
     ) {
+
       return "1:1";
     }
+
 
     if (
       value.includes(
         "9:16"
       )
     ) {
+
       return "9:16";
     }
+
 
     return "16:9";
   }
@@ -1707,16 +2630,21 @@ document.addEventListener("DOMContentLoaded", () => {
   function setStandardLoading(
     message
   ) {
+
     result.innerHTML = `
-      <div class="result-placeholder loading">
+      <div
+        class="result-placeholder loading"
+      >
 
         <div class="spinner"></div>
+
 
         <p>
           ${escapeHtml(
             message
           )}
         </p>
+
 
         <small>
           Please wait...
@@ -1734,18 +2662,22 @@ document.addEventListener("DOMContentLoaded", () => {
   function setVideoLoading(
     message
   ) {
+
     result.innerHTML = `
       <div class="video-generation-panel">
 
         <div class="spinner"></div>
 
+
         <h3>
           🎬 Creating your video
         </h3>
 
+
         <p>
           DuncanAI is generating your video with AI.
         </p>
+
 
         <div class="video-status">
           ${escapeHtml(
@@ -1753,9 +2685,11 @@ document.addEventListener("DOMContentLoaded", () => {
           )}
         </div>
 
+
         <div class="video-progress">
           <span></span>
         </div>
+
 
         <p
           style="
@@ -1773,24 +2707,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   // =========================================
-  // READ JSON SAFELY
+  // JSON RESPONSE
   // =========================================
 
   async function readJsonResponse(
     response
   ) {
+
     const text =
       await response.text();
+
 
     if (!text) {
       return {};
     }
 
+
     try {
+
       return JSON.parse(
         text
       );
+
     } catch {
+
       return {
         error:
           text ||
@@ -1807,8 +2747,10 @@ document.addEventListener("DOMContentLoaded", () => {
   function wait(
     milliseconds
   ) {
+
     return new Promise(
       (resolve) => {
+
         setTimeout(
           resolve,
           milliseconds
@@ -1825,6 +2767,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function escapeHtml(
     value
   ) {
+
     return String(value)
       .replaceAll(
         "&",
@@ -1850,8 +2793,120 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   // =========================================
-  // INITIALIZE GALLERY
+  // LOAD USER + CLOUD LIBRARY
+  // =========================================
+
+  async function initializeCloudLibrary() {
+
+    if (!supabase) {
+
+      renderCreations();
+
+      return;
+    }
+
+
+    currentUser =
+      await getCurrentUser();
+
+
+    if (!currentUser) {
+
+      cloudMode = false;
+
+      renderCreations();
+
+      return;
+    }
+
+
+    cloudMode = true;
+
+
+    await loadCloudCreations();
+
+
+    await migrateLocalCreations();
+
+
+    await loadCloudCreations();
+
+
+    renderCreations();
+  }
+
+
+  // =========================================
+  // AUTH CHANGES
+  // =========================================
+
+  if (
+    supabase
+  ) {
+
+    supabase.auth.onAuthStateChange(
+      async (
+        event,
+        session
+      ) => {
+
+        console.log(
+          "DuncanAI auth event:",
+          event
+        );
+
+
+        currentUser =
+          session?.user ||
+          null;
+
+
+        if (
+          currentUser
+        ) {
+
+          cloudMode =
+            true;
+
+
+          await loadCloudCreations();
+
+
+          await migrateLocalCreations();
+
+
+          await loadCloudCreations();
+
+        } else {
+
+          currentUser =
+            null;
+
+          cloudCreations =
+            [];
+
+          cloudMode =
+            false;
+        }
+
+
+        renderCreations();
+      }
+    );
+  }
+
+
+  // =========================================
+  // INITIAL GALLERY
   // =========================================
 
   renderCreations();
+
+
+  // =========================================
+  // INITIAL CLOUD LOAD
+  // =========================================
+
+  initializeCloudLibrary();
+
 });
