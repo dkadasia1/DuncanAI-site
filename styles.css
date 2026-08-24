@@ -1176,3 +1176,260 @@ footer .brand img {
     width: 100%;
   }
 }
+/* =========================================
+   DUNCANAI AUTHENTICATION
+   ========================================= */
+
+.nav-account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-account-button {
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.05);
+  color: #dbeafe;
+  padding: 10px 15px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.nav-account-button:hover {
+  background: rgba(255,255,255,.09);
+}
+
+.auth-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.auth-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.68);
+  backdrop-filter: blur(8px);
+}
+
+.auth-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 440px;
+  padding: 30px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(20,31,50,.98),
+      rgba(9,14,24,.98)
+    );
+  box-shadow: 0 35px 100px rgba(0,0,0,.55);
+}
+
+.auth-card h2 {
+  margin-top: 12px;
+  margin-bottom: 8px;
+}
+
+.auth-description {
+  margin: 0 0 20px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.auth-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  border: 0;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.auth-close:hover {
+  color: white;
+}
+
+.auth-card form {
+  width: 100%;
+}
+
+.auth-card label {
+  display: block;
+  margin: 16px 0 8px;
+  color: #dbe4f0;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.auth-card input {
+  width: 100%;
+  height: 46px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #080e19;
+  color: white;
+  outline: none;
+  font: inherit;
+}
+
+.auth-card input:focus {
+  border-color: #7c3aed;
+}
+
+.auth-submit {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.auth-switch {
+  margin-top: 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.auth-switch-button {
+  margin-left: 5px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #c4b5fd;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.auth-switch-button:hover {
+  color: white;
+}
+
+.auth-message {
+  width: 100%;
+  margin: 12px 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.auth-error {
+  border: 1px solid rgba(255,60,60,.25);
+  background: rgba(255,60,60,.10);
+  color: #fecaca;
+}
+
+.auth-success {
+  border: 1px solid rgba(34,211,238,.20);
+  background: rgba(34,211,238,.08);
+  color: #a5f3fc;
+}
+
+.account-menu {
+  position: fixed;
+  top: 86px;
+  right: 6%;
+  z-index: 900;
+}
+
+.account-menu-inner {
+  min-width: 230px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(20,31,50,.98),
+      rgba(9,14,24,.98)
+    );
+  box-shadow: 0 20px 60px rgba(0,0,0,.35);
+}
+
+.account-user-email {
+  padding: 8px 8px 12px;
+  color: #cbd5e1;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.account-menu-button {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255,255,255,.04);
+  color: #fda4af;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 700;
+}
+
+.account-menu-button:hover {
+  background: rgba(255,60,90,.08);
+}
+
+.hidden {
+  display: none !important;
+}
+
+
+/* =========================================
+   AUTH MOBILE
+   ========================================= */
+
+@media (max-width: 700px) {
+
+  .nav-account {
+    gap: 6px;
+  }
+
+  .nav-account-button {
+    padding: 9px 11px;
+    font-size: 13px;
+  }
+
+  .auth-card {
+    padding: 24px 20px;
+  }
+
+  .account-menu {
+    top: 82px;
+    right: 4%;
+    left: 4%;
+  }
+
+  .account-menu-inner {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 520px) {
+
+  .nav-account .nav-button {
+    display: none;
+  }
+
+  .nav-account-button {
+    font-size: 12px;
+  }
+
+  .auth-card {
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+  }
+}
