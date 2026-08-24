@@ -1,4 +1,11 @@
 document.addEventListener("DOMContentLoaded", async () => {
+
+  // =========================================
+  // DUNCANAI AUTHENTICATION
+  // =========================================
+
+  const supabase = window.supabaseClient;
+
   // =========================================
   // AUTH ELEMENTS
   // =========================================
@@ -13,69 +20,65 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("auth-modal");
 
   const authBackdrop =
-    document.getElementById(
-      "auth-modal-backdrop"
-    );
+    document.getElementById("auth-modal-backdrop");
 
   const authClose =
-    document.getElementById(
-      "auth-close"
-    );
+    document.getElementById("auth-close");
 
   const loginForm =
-    document.getElementById(
-      "login-form"
-    );
+    document.getElementById("login-form");
 
   const signupForm =
-    document.getElementById(
-      "signup-form"
-    );
+    document.getElementById("signup-form");
 
   const authTitle =
-    document.getElementById(
-      "auth-title"
-    );
+    document.getElementById("auth-title");
 
   const authDescription =
-    document.getElementById(
-      "auth-description"
-    );
+    document.getElementById("auth-description");
 
   const authSwitchText =
-    document.getElementById(
-      "auth-switch-text"
-    );
+    document.getElementById("auth-switch-text");
 
   const authSwitchButton =
-    document.getElementById(
-      "auth-switch-button"
-    );
+    document.getElementById("auth-switch-button");
 
   const authError =
-    document.getElementById(
-      "auth-error"
-    );
+    document.getElementById("auth-error");
 
   const authSuccess =
-    document.getElementById(
-      "auth-success"
-    );
+    document.getElementById("auth-success");
 
   const accountMenu =
-    document.getElementById(
-      "account-menu"
-    );
+    document.getElementById("account-menu");
 
   const accountUserEmail =
-    document.getElementById(
-      "account-user-email"
-    );
+    document.getElementById("account-user-email");
 
   const logoutButton =
-    document.getElementById(
-      "logout-button"
+    document.getElementById("logout-button");
+
+
+  // =========================================
+  // SAFETY CHECK
+  // =========================================
+
+  if (!supabase) {
+
+    console.error(
+      "DuncanAI: Supabase client is not available."
     );
+
+    if (authError) {
+      authError.textContent =
+        "Authentication system is not available. Please refresh the page.";
+      
+      authError.classList.remove("hidden");
+    }
+
+    return;
+  }
+
 
   // =========================================
   // STATE
@@ -83,91 +86,97 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   let showingSignup = false;
 
-  // =========================================
-  // SAFETY CHECK
-  // =========================================
-
-  if (
-    !window.supabase ||
-    !window.supabaseClient
-  ) {
-    console.error(
-      "DuncanAI: Supabase client is not available."
-    );
-
-    return;
-  }
-
-  const supabase =
-    window.supabaseClient;
 
   // =========================================
-  // AUTH MODAL
+  // AUTH REDIRECT URL
+  // =========================================
+  //
+  // IMPORTANT:
+  // Change this to your REAL WEBSITE URL
+  // when your website is published.
+  //
+  // Example:
+  // https://duncanai.com
+  //
+  // For now, this automatically uses the
+  // current website address.
   // =========================================
 
-  function openAuthModal(
-    signup = false
-  ) {
+  const SITE_URL =
+    window.location.origin;
+
+
+  // =========================================
+  // OPEN AUTH MODAL
+  // =========================================
+
+  function openAuthModal(signup = false) {
+
     showingSignup = signup;
 
     clearMessages();
 
     updateAuthView();
 
-    authModal.classList.remove(
-      "hidden"
-    );
+    if (authModal) {
+      authModal.classList.remove("hidden");
+    }
 
-    document.body.style.overflow =
-      "hidden";
+    document.body.style.overflow = "hidden";
   }
 
-  function closeAuthModal() {
-    authModal.classList.add(
-      "hidden"
-    );
 
-    document.body.style.overflow =
-      "";
+  // =========================================
+  // CLOSE AUTH MODAL
+  // =========================================
+
+  function closeAuthModal() {
+
+    if (authModal) {
+      authModal.classList.add("hidden");
+    }
+
+    document.body.style.overflow = "";
 
     clearMessages();
   }
 
+
+  // =========================================
+  // UPDATE LOGIN / SIGNUP VIEW
+  // =========================================
+
   function updateAuthView() {
+
     if (showingSignup) {
+
       authTitle.textContent =
         "Create your account";
 
       authDescription.textContent =
         "Create an account to keep your DuncanAI creations with you.";
 
-      loginForm.classList.add(
-        "hidden"
-      );
+      loginForm.classList.add("hidden");
 
-      signupForm.classList.remove(
-        "hidden"
-      );
+      signupForm.classList.remove("hidden");
 
       authSwitchText.textContent =
         "Already have an account?";
 
       authSwitchButton.textContent =
         "Log in";
+
     } else {
+
       authTitle.textContent =
         "Welcome back";
 
       authDescription.textContent =
         "Sign in to save your creations across devices.";
 
-      signupForm.classList.add(
-        "hidden"
-      );
+      signupForm.classList.add("hidden");
 
-      loginForm.classList.remove(
-        "hidden"
-      );
+      loginForm.classList.remove("hidden");
 
       authSwitchText.textContent =
         "Don't have an account?";
@@ -177,50 +186,80 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  function clearMessages() {
-    authError.textContent = "";
-    authSuccess.textContent = "";
-
-    authError.classList.add(
-      "hidden"
-    );
-
-    authSuccess.classList.add(
-      "hidden"
-    );
-  }
-
-  function showError(message) {
-    authSuccess.classList.add(
-      "hidden"
-    );
-
-    authError.textContent =
-      message;
-
-    authError.classList.remove(
-      "hidden"
-    );
-  }
-
-  function showSuccess(message) {
-    authError.classList.add(
-      "hidden"
-    );
-
-    authSuccess.textContent =
-      message;
-
-    authSuccess.classList.remove(
-      "hidden"
-    );
-  }
 
   // =========================================
-  // OPEN LOGIN
+  // CLEAR MESSAGES
+  // =========================================
+
+  function clearMessages() {
+
+    if (authError) {
+
+      authError.textContent = "";
+
+      authError.classList.add("hidden");
+    }
+
+    if (authSuccess) {
+
+      authSuccess.textContent = "";
+
+      authSuccess.classList.add("hidden");
+    }
+  }
+
+
+  // =========================================
+  // SHOW ERROR
+  // =========================================
+
+  function showError(message) {
+
+    if (authSuccess) {
+      authSuccess.classList.add("hidden");
+    }
+
+    if (authError) {
+
+      authError.textContent =
+        message;
+
+      authError.classList.remove("hidden");
+    }
+
+    console.error(
+      "DuncanAI Auth:",
+      message
+    );
+  }
+
+
+  // =========================================
+  // SHOW SUCCESS
+  // =========================================
+
+  function showSuccess(message) {
+
+    if (authError) {
+      authError.classList.add("hidden");
+    }
+
+    if (authSuccess) {
+
+      authSuccess.textContent =
+        message;
+
+      authSuccess.classList.remove("hidden");
+    }
+  }
+
+
+  // =========================================
+  // OPEN LOGIN BUTTON
   // =========================================
 
   if (loginButton) {
+
     loginButton.addEventListener(
       "click",
       () => {
@@ -229,47 +268,60 @@ document.addEventListener("DOMContentLoaded", async () => {
     );
   }
 
+
   // =========================================
   // OPEN ACCOUNT
   // =========================================
 
   if (accountButton) {
+
     accountButton.addEventListener(
       "click",
       () => {
-        accountMenu.classList.toggle(
-          "hidden"
-        );
+
+        if (accountMenu) {
+
+          accountMenu.classList.toggle(
+            "hidden"
+          );
+        }
       }
     );
   }
 
+
   // =========================================
-  // CLOSE MODAL
+  // CLOSE AUTH MODAL
   // =========================================
 
   if (authClose) {
+
     authClose.addEventListener(
       "click",
       closeAuthModal
     );
   }
 
+
   if (authBackdrop) {
+
     authBackdrop.addEventListener(
       "click",
       closeAuthModal
     );
   }
 
+
   // =========================================
   // SWITCH LOGIN / SIGNUP
   // =========================================
 
   if (authSwitchButton) {
+
     authSwitchButton.addEventListener(
       "click",
       () => {
+
         showingSignup =
           !showingSignup;
 
@@ -280,44 +332,48 @@ document.addEventListener("DOMContentLoaded", async () => {
     );
   }
 
+
   // =========================================
   // SIGN UP
   // =========================================
 
   if (signupForm) {
+
     signupForm.addEventListener(
       "submit",
       async (event) => {
+
         event.preventDefault();
 
         clearMessages();
 
+
         const name =
           document
-            .getElementById(
-              "signup-name"
-            )
+            .getElementById("signup-name")
             .value
             .trim();
+
 
         const email =
           document
-            .getElementById(
-              "signup-email"
-            )
+            .getElementById("signup-email")
             .value
             .trim();
 
+
         const password =
           document
-            .getElementById(
-              "signup-password"
-            )
+            .getElementById("signup-password")
             .value;
 
-        if (
-          name.length < 2
-        ) {
+
+        // -------------------------------------
+        // VALIDATE NAME
+        // -------------------------------------
+
+        if (name.length < 2) {
+
           showError(
             "Please enter your name."
           );
@@ -325,9 +381,13 @@ document.addEventListener("DOMContentLoaded", async () => {
           return;
         }
 
-        if (
-          password.length < 8
-        ) {
+
+        // -------------------------------------
+        // VALIDATE PASSWORD
+        // -------------------------------------
+
+        if (password.length < 8) {
+
           showError(
             "Your password must be at least 8 characters."
           );
@@ -335,68 +395,110 @@ document.addEventListener("DOMContentLoaded", async () => {
           return;
         }
 
+
         const submitButton =
           signupForm.querySelector(
             "button[type='submit']"
           );
 
-        submitButton.disabled =
-          true;
+
+        submitButton.disabled = true;
 
         submitButton.textContent =
           "Creating account...";
 
+
         try {
+
+          // -----------------------------------
+          // CREATE SUPABASE ACCOUNT
+          // -----------------------------------
+
           const {
             data,
             error
           } =
             await supabase.auth.signUp({
-              email,
-              password,
+
+              email: email,
+
+              password: password,
 
               options: {
+
                 data: {
-                  full_name:
-                    name
+                  full_name: name
                 },
 
+                /*
+                 * IMPORTANT
+                 *
+                 * The user will be redirected back
+                 * to the same website after clicking
+                 * the confirmation email.
+                 */
+
                 emailRedirectTo:
-                  window.location.origin
+                  SITE_URL
               }
             });
+
 
           if (error) {
             throw error;
           }
 
-          if (
-            data?.user &&
-            data?.session
-          ) {
-            showSuccess(
-              "Account created successfully."
-            );
 
-            await refreshAuthState();
+          // -----------------------------------
+          // ACCOUNT CREATED
+          // -----------------------------------
 
-            setTimeout(
-              closeAuthModal,
-              1000
-            );
+          if (data?.user) {
+
+            if (data?.session) {
+
+              showSuccess(
+                "Account created successfully. You are now signed in."
+              );
+
+              await refreshAuthState();
+
+              setTimeout(
+                closeAuthModal,
+                1000
+              );
+
+            } else {
+
+              showSuccess(
+                "Account created! Please check your email and click the confirmation link to activate your DuncanAI account."
+              );
+            }
+
           } else {
-            showSuccess(
-              "Account created. Check your email to confirm your account."
+
+            showError(
+              "The account could not be created. Please try again."
             );
           }
 
+
         } catch (error) {
+
+          console.error(
+            "DuncanAI signup error:",
+            error
+          );
+
+
           showError(
             error?.message ||
             "Unable to create your account."
           );
 
+
         } finally {
+
           submitButton.disabled =
             false;
 
@@ -407,75 +509,103 @@ document.addEventListener("DOMContentLoaded", async () => {
     );
   }
 
+
   // =========================================
   // LOGIN
   // =========================================
 
   if (loginForm) {
+
     loginForm.addEventListener(
       "submit",
       async (event) => {
+
         event.preventDefault();
 
         clearMessages();
 
+
         const email =
           document
-            .getElementById(
-              "login-email"
-            )
+            .getElementById("login-email")
             .value
             .trim();
 
+
         const password =
           document
-            .getElementById(
-              "login-password"
-            )
+            .getElementById("login-password")
             .value;
+
 
         const submitButton =
           loginForm.querySelector(
             "button[type='submit']"
           );
 
-        submitButton.disabled =
-          true;
+
+        submitButton.disabled = true;
 
         submitButton.textContent =
           "Signing in...";
 
+
         try {
+
           const {
+            data,
             error
           } =
             await supabase.auth.signInWithPassword({
-              email,
-              password
+
+              email: email,
+
+              password: password
             });
+
 
           if (error) {
             throw error;
           }
 
-          showSuccess(
-            "You are now signed in."
-          );
 
-          await refreshAuthState();
+          if (data?.user) {
 
-          setTimeout(
-            closeAuthModal,
-            800
-          );
+            showSuccess(
+              "You are now signed in."
+            );
+
+            await refreshAuthState();
+
+            setTimeout(
+              closeAuthModal,
+              800
+            );
+
+          } else {
+
+            showError(
+              "Login was not completed. Please try again."
+            );
+          }
+
 
         } catch (error) {
-          showError(
-            error?.message ||
-            "Unable to sign in."
+
+          console.error(
+            "DuncanAI login error:",
+            error
           );
 
+
+          showError(
+            error?.message ||
+            "Unable to sign in. Please check your email and password."
+          );
+
+
         } finally {
+
           submitButton.disabled =
             false;
 
@@ -486,120 +616,238 @@ document.addEventListener("DOMContentLoaded", async () => {
     );
   }
 
+
   // =========================================
   // LOG OUT
   // =========================================
 
   if (logoutButton) {
+
     logoutButton.addEventListener(
       "click",
       async () => {
 
         try {
+
           const {
             error
           } =
             await supabase.auth.signOut();
 
+
           if (error) {
             throw error;
           }
 
-          accountMenu.classList.add(
-            "hidden"
-          );
+
+          if (accountMenu) {
+
+            accountMenu.classList.add(
+              "hidden"
+            );
+          }
+
 
           await refreshAuthState();
 
+
         } catch (error) {
+
           console.error(
             "DuncanAI logout error:",
             error
+          );
+
+          showError(
+            "Unable to log out. Please try again."
           );
         }
       }
     );
   }
 
+
   // =========================================
-  // REFRESH AUTH UI
+  // REFRESH AUTH STATE
   // =========================================
 
   async function refreshAuthState() {
-    const {
-      data,
-      error
-    } =
-      await supabase.auth.getSession();
 
-    if (error) {
-      console.error(
-        "DuncanAI session error:",
+    try {
+
+      const {
+        data,
         error
+      } =
+        await supabase.auth.getSession();
+
+
+      if (error) {
+
+        console.error(
+          "DuncanAI session error:",
+          error
+        );
+
+        return;
+      }
+
+
+      const session =
+        data?.session;
+
+
+      updateAuthUI(
+        session?.user || null
       );
 
-      return;
+
+    } catch (error) {
+
+      console.error(
+        "DuncanAI session check failed:",
+        error
+      );
     }
-
-    const session =
-      data?.session;
-
-    updateAuthUI(
-      session?.user || null
-    );
   }
+
 
   // =========================================
   // UPDATE NAVIGATION
   // =========================================
 
-  function updateAuthUI(
-    user
-  ) {
+  function updateAuthUI(user) {
+
     if (user) {
-      loginButton.classList.add(
-        "hidden"
-      );
 
-      accountButton.classList.remove(
-        "hidden"
-      );
+      if (loginButton) {
 
-      accountUserEmail.textContent =
-        user.email || "Signed in";
+        loginButton.classList.add(
+          "hidden"
+        );
+      }
+
+
+      if (accountButton) {
+
+        accountButton.classList.remove(
+          "hidden"
+        );
+      }
+
+
+      if (accountUserEmail) {
+
+        accountUserEmail.textContent =
+          user.email || "Signed in";
+      }
+
+
     } else {
-      loginButton.classList.remove(
-        "hidden"
-      );
 
-      accountButton.classList.add(
-        "hidden"
-      );
+      if (loginButton) {
 
-      accountMenu.classList.add(
-        "hidden"
-      );
+        loginButton.classList.remove(
+          "hidden"
+        );
+      }
 
-      accountUserEmail.textContent =
-        "";
+
+      if (accountButton) {
+
+        accountButton.classList.add(
+          "hidden"
+        );
+      }
+
+
+      if (accountMenu) {
+
+        accountMenu.classList.add(
+          "hidden"
+        );
+      }
+
+
+      if (accountUserEmail) {
+
+        accountUserEmail.textContent =
+          "";
+      }
     }
   }
 
+
   // =========================================
-  // AUTH STATE CHANGES
+  // SUPABASE AUTH STATE CHANGES
   // =========================================
 
   supabase.auth.onAuthStateChange(
-    (_event, session) => {
+    (event, session) => {
+
+      console.log(
+        "DuncanAI Auth Event:",
+        event
+      );
+
+
       updateAuthUI(
         session?.user || null
       );
     }
   );
 
+
+  // =========================================
+  // HANDLE EMAIL CONFIRMATION
+  // =========================================
+  //
+  // Supabase may return the user to the site
+  // with authentication information in the URL.
+  //
+  // getSession() lets Supabase process the
+  // confirmation session.
+  // =========================================
+
+  const url =
+    new URL(window.location.href);
+
+
+  const hash =
+    window.location.hash;
+
+
+  if (
+    hash.includes("access_token") ||
+    hash.includes("type=signup") ||
+    hash.includes("type=recovery")
+  ) {
+
+    console.log(
+      "DuncanAI: Authentication callback detected."
+    );
+
+
+    setTimeout(
+      async () => {
+
+        await refreshAuthState();
+
+      },
+      500
+    );
+  }
+
+
   // =========================================
   // INITIAL AUTH CHECK
   // =========================================
 
   await refreshAuthState();
+
+
+  console.log(
+    "DuncanAI: Authentication system ready."
+  );
+
 });
