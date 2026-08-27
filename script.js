@@ -1112,16 +1112,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
           <div class="creation-actions">
 
-            <a
-              href="${escapeHtml(
+            <button
+              type="button"
+              class="creation-action open-creation"
+              data-open-url="${escapeHtml(
                 creation.url
               )}"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="creation-action"
+              data-open-type="${escapeHtml(
+                creation.type
+              )}"
             >
               Open
-            </a>
+            </button>
 
 
             <a
@@ -1165,10 +1167,126 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   // =========================================
-  // DELETE BUTTONS
+  // CREATION ACTIONS
   // =========================================
 
   function attachCreationActions() {
+
+    // -----------------------------------------
+    // OPEN CREATION
+    // -----------------------------------------
+
+    const openButtons =
+      document.querySelectorAll(
+        ".open-creation"
+      );
+
+
+    openButtons.forEach(
+      (button) => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            const url =
+              button.dataset.openUrl;
+
+
+            if (!url) {
+              return;
+            }
+
+
+            // Development SVG/data images
+            if (
+              url.startsWith(
+                "data:image/"
+              )
+            ) {
+
+              const newWindow =
+                window.open();
+
+
+              if (!newWindow) {
+
+                alert(
+                  "Please allow pop-ups for DuncanAI."
+                );
+
+                return;
+              }
+
+
+              newWindow.document.write(`
+                <!DOCTYPE html>
+
+                <html>
+
+                  <head>
+
+                    <title>
+                      DuncanAI Creation
+                    </title>
+
+                    <style>
+
+                      body {
+                        margin: 0;
+                        background: #111827;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        min-height: 100vh;
+                      }
+
+                      img {
+                        max-width: 95vw;
+                        max-height: 95vh;
+                        object-fit: contain;
+                      }
+
+                    </style>
+
+                  </head>
+
+
+                  <body>
+
+                    <img
+                      src="${url}"
+                      alt="DuncanAI creation"
+                    >
+
+                  </body>
+
+                </html>
+              `);
+
+
+              newWindow.document.close();
+
+
+              return;
+            }
+
+
+            // Normal hosted images/videos
+            window.open(
+              url,
+              "_blank",
+              "noopener,noreferrer"
+            );
+          }
+        );
+      }
+    );
+
+
+    // -----------------------------------------
+    // DELETE CREATION
+    // -----------------------------------------
 
     const buttons =
       document.querySelectorAll(
@@ -1185,6 +1303,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const id =
               button.dataset.deleteId;
+
 
             const source =
               button.dataset.deleteSource ||
@@ -1430,6 +1549,7 @@ document.addEventListener("DOMContentLoaded", () => {
         creator.classList.add(
           "hidden"
         );
+
 
         uploadedImage =
           null;
