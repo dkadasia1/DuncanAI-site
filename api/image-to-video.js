@@ -6,35 +6,26 @@ export default async function handler(req, res) {
   }
 
   try {
-    // -----------------------------------------
-    // Parse request body safely
-    // -----------------------------------------
+    // =========================================
+    // PARSE REQUEST
+    // =========================================
 
     const body =
       typeof req.body === "string"
         ? JSON.parse(req.body)
-        : req.body;
+        : req.body || {};
 
     const {
       image,
       prompt,
       aspectRatio = "16:9",
       duration = 5
-    } = body || {};
+    } = body;
 
-    // -----------------------------------------
-    // Check Runway API key
-    // -----------------------------------------
 
-    if (!process.env.RUNWAY_API_KEY) {
-      return res.status(500).json({
-        error: "Runway API is not configured yet."
-      });
-    }
-
-    // -----------------------------------------
-    // Validate image
-    // -----------------------------------------
+    // =========================================
+    // VALIDATE IMAGE
+    // =========================================
 
     if (!image || typeof image !== "string") {
       return res.status(400).json({
@@ -42,7 +33,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // Runway data URI limit
+
     if (image.length > 5242880) {
       return res.status(400).json({
         error:
@@ -50,9 +41,10 @@ export default async function handler(req, res) {
       });
     }
 
-    // -----------------------------------------
-    // Validate prompt
-    // -----------------------------------------
+
+    // =========================================
+    // VALIDATE PROMPT
+    // =========================================
 
     if (!prompt || typeof prompt !== "string") {
       return res.status(400).json({
@@ -61,7 +53,10 @@ export default async function handler(req, res) {
       });
     }
 
-    const cleanPrompt = prompt.trim();
+
+    const cleanPrompt =
+      prompt.trim();
+
 
     if (cleanPrompt.length < 5) {
       return res.status(400).json({
@@ -70,6 +65,7 @@ export default async function handler(req, res) {
       });
     }
 
+
     if (cleanPrompt.length > 1000) {
       return res.status(400).json({
         error:
@@ -77,11 +73,32 @@ export default async function handler(req, res) {
       });
     }
 
-    // -----------------------------------------
-    // Validate duration
-    // -----------------------------------------
 
-    const videoDuration = Number(duration);
+    // =========================================
+    // VALIDATE ASPECT RATIO
+    // =========================================
+
+    const allowedRatios = [
+      "16:9",
+      "9:16",
+      "1:1"
+    ];
+
+
+    if (!allowedRatios.includes(aspectRatio)) {
+      return res.status(400).json({
+        error: "Invalid aspect ratio."
+      });
+    }
+
+
+    // =========================================
+    // VALIDATE DURATION
+    // =========================================
+
+    const videoDuration =
+      Number(duration);
+
 
     if (
       !Number.isInteger(videoDuration) ||
@@ -94,132 +111,93 @@ export default async function handler(req, res) {
       });
     }
 
-    // -----------------------------------------
-    // Map DuncanAI aspect ratios
-    // -----------------------------------------
 
-    const ratioMap = {
-      "16:9": "1280:720",
-      "9:16": "720:1280",
-      "1:1": "960:960"
-    };
+    // =========================================
+    // DUNCANAI FREE DEVELOPMENT MODE
+    // =========================================
+    //
+    // IMPORTANT:
+    //
+    // We are NOT calling Runway.
+    // We are NOT calling OpenAI.
+    // We are NOT using API credits.
+    //
+    // This endpoint simply creates a development
+    // task ID so we can test the complete:
+    //
+    // Upload Image
+    // ↓
+    // Generate
+    // ↓
+    // Task ID
+    // ↓
+    // Video Status
+    // ↓
+    // Video Result
+    // ↓
+    // My Creations
+    // ↓
+    // Open
+    // ↓
+    // Download
+    // ↓
+    // Delete
+    //
+    // workflow for free.
+    // =========================================
 
-    const ratio = ratioMap[aspectRatio];
 
-    if (!ratio) {
-      return res.status(400).json({
-        error: "Invalid aspect ratio."
-      });
-    }
+    const developmentTaskId =
+      "DUNCANAI_DEV_" +
+      Date.now() +
+      "_" +
+      Math.random()
+        .toString(36)
+        .slice(2, 10);
 
-    // -----------------------------------------
-    // Create Runway Image → Video task
-    // -----------------------------------------
-
-    const response = await fetch(
-      "https://api.dev.runwayml.com/v1/image_to_video",
-      {
-        method: "POST",
-
-        headers: {
-          Authorization: `Bearer ${process.env.RUNWAY_API_KEY}`,
-          "Content-Type": "application/json",
-          "X-Runway-Version": "2024-11-06"
-        },
-
-        body: JSON.stringify({
-          model: "gen4_turbo",
-          promptImage: image,
-          promptText: cleanPrompt,
-          position: "first",
-          ratio: ratio,
-          duration: videoDuration
-        })
-      }
-    );
-
-    // -----------------------------------------
-    // Read Runway response
-    // -----------------------------------------
-
-    const responseText = await response.text();
 
     console.log(
-      "Runway response:",
-      response.status,
-      responseText
+      "DuncanAI development image-to-video task:",
+      developmentTaskId
     );
 
-    // -----------------------------------------
-    // Handle Runway errors
-    // -----------------------------------------
 
-    if (!response.ok) {
-      let runwayError = responseText;
-
-      try {
-        const parsed = JSON.parse(responseText);
-
-        runwayError =
-          parsed?.error?.message ||
-          parsed?.error ||
-          parsed?.message ||
-          responseText;
-      } catch {
-        // Keep original response
-      }
-
-      return res.status(response.status).json({
-        error: `Runway API error: ${runwayError}`
-      });
-    }
-
-    // -----------------------------------------
-    // Parse successful response
-    // -----------------------------------------
-
-    let data;
-
-    try {
-      data = JSON.parse(responseText);
-    } catch {
-      return res.status(500).json({
-        error: "Runway returned an invalid response."
-      });
-    }
-
-    // -----------------------------------------
-    // Validate task ID
-    // -----------------------------------------
-
-    if (!data || !data.id) {
-      return res.status(500).json({
-        error:
-          "Runway did not return a video task ID."
-      });
-    }
-
-    // -----------------------------------------
-    // Return task ID
-    // -----------------------------------------
+    // =========================================
+    // RETURN DEVELOPMENT TASK
+    // =========================================
 
     return res.status(200).json({
+
       success: true,
-      taskId: data.id,
-      estimatedCost:
-        data.estimatedCost || null
+
+      developmentMode: true,
+
+      taskId:
+        developmentTaskId,
+
+      prompt:
+        cleanPrompt,
+
+      aspectRatio,
+
+      duration:
+        videoDuration
+
     });
 
+
   } catch (error) {
+
     console.error(
-      "Image-to-video server error:",
+      "DuncanAI development image-to-video error:",
       error
     );
+
 
     return res.status(500).json({
       error:
         error?.message ||
-        "Something went wrong while creating the video."
+        "Something went wrong while creating the development video."
     });
   }
 }
