@@ -1,11 +1,18 @@
 export default async function handler(req, res) {
+
+  // =========================================
+  // ONLY POST REQUESTS
+  // =========================================
+
   if (req.method !== "POST") {
     return res.status(405).json({
       error: "Method not allowed"
     });
   }
 
+
   try {
+
     // =========================================
     // PARSE REQUEST BODY
     // =========================================
@@ -13,14 +20,20 @@ export default async function handler(req, res) {
     let body = req.body;
 
     if (typeof body === "string") {
+
       try {
+
         body = JSON.parse(body);
+
       } catch {
+
         return res.status(400).json({
           error: "Invalid JSON request body."
         });
+
       }
     }
+
 
     const {
       prompt,
@@ -28,173 +41,184 @@ export default async function handler(req, res) {
       duration = 5
     } = body || {};
 
-    // =========================================
-    // CHECK RUNWAY API KEY
-    // =========================================
-
-    const apiKey = process.env.RUNWAY_API_KEY;
-
-    if (!apiKey) {
-      return res.status(500).json({
-        error: "Runway API is not configured yet."
-      });
-    }
 
     // =========================================
     // VALIDATE PROMPT
     // =========================================
 
-    if (!prompt || typeof prompt !== "string") {
+    if (
+      !prompt ||
+      typeof prompt !== "string"
+    ) {
+
       return res.status(400).json({
-        error: "Please describe the video you want to create."
+        error:
+          "Please describe the video you want to create."
       });
     }
 
-    const cleanPrompt = prompt.trim();
 
-    if (cleanPrompt.length < 5) {
+    const cleanPrompt =
+      prompt.trim();
+
+
+    if (
+      cleanPrompt.length < 5
+    ) {
+
       return res.status(400).json({
-        error: "Please enter at least 5 characters."
+        error:
+          "Please enter at least 5 characters."
       });
     }
 
-    if (cleanPrompt.length > 1000) {
+
+    if (
+      cleanPrompt.length > 1000
+    ) {
+
       return res.status(400).json({
-        error: "Video prompts must be under 1,000 characters."
+        error:
+          "Video prompts must be under 1,000 characters."
       });
     }
+
 
     // =========================================
     // VALIDATE DURATION
     // =========================================
 
-    const videoDuration = Number(duration);
+    const videoDuration =
+      Number(duration);
+
 
     if (
       !Number.isInteger(videoDuration) ||
       videoDuration < 2 ||
       videoDuration > 10
     ) {
+
       return res.status(400).json({
-        error: "Video duration must be between 2 and 10 seconds."
+        error:
+          "Video duration must be between 2 and 10 seconds."
       });
     }
 
+
     // =========================================
-    // ASPECT RATIO
+    // VALIDATE ASPECT RATIO
     // =========================================
 
-    const ratioMap = {
-      "16:9": "1280:720",
-      "9:16": "720:1280"
-    };
+    const allowedRatios = [
+      "16:9",
+      "9:16"
+    ];
 
-    const ratio = ratioMap[aspectRatio];
 
-    if (!ratio) {
+    if (
+      !allowedRatios.includes(
+        aspectRatio
+      )
+    ) {
+
       return res.status(400).json({
-        error: "Choose either 16:9 or 9:16."
+        error:
+          "Choose either 16:9 or 9:16."
       });
     }
 
+
     // =========================================
-    // CREATE RUNWAY TEXT → VIDEO TASK
+    // DUNCANAI FREE DEVELOPMENT MODE
+    // =========================================
+    //
+    // No Runway API call.
+    //
+    // No API key required.
+    //
+    // We create a development task ID.
+    //
+    // video-status.js recognizes this ID
+    // and returns our temporary test video.
+    //
+    // This lets us test:
+    //
+    // Text
+    // ↓
+    // Generate
+    // ↓
+    // Task ID
+    // ↓
+    // Status
+    // ↓
+    // Video
+    // ↓
+    // My Creations
+    // ↓
+    // Open
+    // ↓
+    // Download
+    // ↓
+    // Delete
+    //
+    // without spending Runway credits.
     // =========================================
 
-    const response = await fetch(
-      "https://api.dev.runwayml.com/v1/text_to_video",
-      {
-        method: "POST",
 
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-          "X-Runway-Version": "2024-11-06"
-        },
+    const taskId =
+      "DUNCANAI_DEV_" +
+      Date.now() +
+      "_" +
+      Math.random()
+        .toString(36)
+        .substring(2, 10);
 
-        body: JSON.stringify({
-          model: "gen4.5",
-          promptText: cleanPrompt,
-          ratio,
-          duration: videoDuration
-        })
-      }
-    );
-
-    const responseText = await response.text();
 
     console.log(
-      "Runway text-to-video response:",
-      response.status,
-      responseText
+      "DuncanAI development text-to-video task:",
+      taskId
     );
 
-    // =========================================
-    // HANDLE RUNWAY ERROR
-    // =========================================
-
-    if (!response.ok) {
-      let runwayError = responseText;
-
-      try {
-        const parsed = JSON.parse(responseText);
-
-        if (typeof parsed?.error === "string") {
-          runwayError = parsed.error;
-        } else if (parsed?.error?.message) {
-          runwayError = parsed.error.message;
-        } else if (parsed?.message) {
-          runwayError = parsed.message;
-        }
-      } catch {
-        // Keep original response
-      }
-
-      return res.status(response.status).json({
-        error: `Runway API error: ${runwayError}`
-      });
-    }
 
     // =========================================
-    // PARSE SUCCESS RESPONSE
+    // RETURN DEVELOPMENT TASK
     // =========================================
-
-    let data;
-
-    try {
-      data = JSON.parse(responseText);
-    } catch {
-      return res.status(500).json({
-        error: "Runway returned an invalid response."
-      });
-    }
-
-    // =========================================
-    // TASK ID
-    // =========================================
-
-    if (!data || !data.id) {
-      return res.status(500).json({
-        error: "Runway did not return a video task ID."
-      });
-    }
 
     return res.status(200).json({
+
       success: true,
-      taskId: data.id,
-      estimatedCost: data.estimatedCost || null
+
+      developmentMode:
+        true,
+
+      taskId,
+
+      prompt:
+        cleanPrompt,
+
+      aspectRatio,
+
+      duration:
+        videoDuration,
+
+      estimatedCost:
+        0
+
     });
 
+
   } catch (error) {
+
     console.error(
-      "Text-to-video server error:",
+      "DuncanAI development text-to-video error:",
       error
     );
+
 
     return res.status(500).json({
       error:
         error?.message ||
-        "Something went wrong while creating the video."
+        "Something went wrong while creating the development video."
     });
   }
 }
