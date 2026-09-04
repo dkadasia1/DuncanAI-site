@@ -1503,22 +1503,10 @@ document.addEventListener("DOMContentLoaded", () => {
             creatorTitle.textContent =
               "Edit & Enhance";
 
+            promptInput.placeholder =
+              "Example: Improve the lighting, enhance the colors, remove distractions, make the image look more professional...";
 
-            result.innerHTML = `
-              <div class="result-placeholder">
-
-                <strong>
-                  ✨ Edit & Enhance
-                </strong>
-
-                <p
-                  style="margin-top:8px;"
-                >
-                  AI image editing is coming next.
-                </p>
-
-              </div>
-            `;
+            showEditEnhanceInterface();
           }
 
 
@@ -1697,6 +1685,337 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   // =========================================
+  // EDIT & ENHANCE INTERFACE
+  // =========================================
+
+  function showEditEnhanceInterface() {
+
+    uploadedImage = null;
+    promptInput.value = "";
+
+    result.innerHTML = `
+      <div class="video-workspace">
+
+        <div class="video-generation-panel">
+
+          <h3>✨ Edit & Enhance Your Image</h3>
+
+          <p>
+            Upload an image, then describe the changes
+            you want DuncanAI to make.
+          </p>
+
+          <div class="upload-box" style="margin-top:20px;">
+
+            <input
+              type="file"
+              id="edit-image-upload"
+              accept="image/png,image/jpeg,image/webp"
+            />
+
+            <label
+              for="edit-image-upload"
+              class="upload-label"
+            >
+              🖼️ Choose an image
+            </label>
+
+            <div id="edit-image-preview"></div>
+
+            <p class="upload-help">
+              JPG, PNG, or WebP. Maximum 5 MB.
+            </p>
+
+          </div>
+
+          <div
+            class="video-source-card"
+            style="margin-top:20px;"
+          >
+
+            <div class="video-source-title">
+              💡 Editing ideas
+            </div>
+
+            <p style="text-align:left; margin:8px 0;">
+              • Improve the lighting and make the colors richer.
+            </p>
+
+            <p style="text-align:left; margin:8px 0;">
+              • Make this portrait look more professional.
+            </p>
+
+            <p style="text-align:left; margin:8px 0;">
+              • Remove distractions and clean up the background.
+            </p>
+
+            <p style="text-align:left; margin:8px 0;">
+              • Enhance sharpness and overall image quality.
+            </p>
+
+          </div>
+
+        </div>
+
+      </div>
+    `;
+
+    const uploadInput =
+      document.getElementById("edit-image-upload");
+
+    if (uploadInput) {
+
+      uploadInput.addEventListener(
+        "change",
+        handleEditImageUpload
+      );
+    }
+  }
+
+
+  // =========================================
+  // EDIT & ENHANCE IMAGE UPLOAD
+  // =========================================
+
+  function handleEditImageUpload(event) {
+
+    const file =
+      event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+
+      alert("Please select an image file.");
+      event.target.value = "";
+
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+
+      alert(
+        "Please choose an image smaller than 5 MB."
+      );
+
+      event.target.value = "";
+
+      return;
+    }
+
+    const reader =
+      new FileReader();
+
+    reader.onload = () => {
+
+      uploadedImage =
+        reader.result;
+
+      const preview =
+        document.getElementById(
+          "edit-image-preview"
+        );
+
+      if (!preview) {
+        return;
+      }
+
+      preview.innerHTML = `
+        <div class="video-source-card">
+
+          <div class="video-source-title">
+            🖼️ Image Ready to Edit
+          </div>
+
+          <img
+            src="${escapeHtml(uploadedImage)}"
+            alt="Image selected for editing"
+            class="video-source-image"
+          />
+
+        </div>
+      `;
+    };
+
+    reader.onerror = () => {
+
+      uploadedImage = null;
+
+      result.innerHTML = `
+        <div class="error">
+          Unable to read that image.
+          Please try another image.
+        </div>
+      `;
+    };
+
+    reader.readAsDataURL(file);
+  }
+
+
+  // =========================================
+  // EDIT & ENHANCE GENERATION
+  // =========================================
+
+  async function generateEditEnhance() {
+
+    if (!uploadedImage) {
+
+      result.innerHTML = `
+        <div class="error">
+          Please upload an image first.
+        </div>
+      `;
+
+      return;
+    }
+
+    const prompt =
+      promptInput.value.trim();
+
+    if (prompt.length < 3) {
+
+      result.innerHTML = `
+        <div class="error">
+          Please describe what you want to change.
+        </div>
+      `;
+
+      return;
+    }
+
+    if (prompt.length > 1000) {
+
+      result.innerHTML = `
+        <div class="error">
+          Please keep your editing instruction under 1,000 characters.
+        </div>
+      `;
+
+      return;
+    }
+
+    const aspectRatio =
+      getAspectRatio();
+
+    setStandardLoading(
+      "Editing and enhancing your image..."
+    );
+
+    generateButton.disabled = true;
+    generateButton.textContent = "Editing...";
+
+    try {
+
+      const response =
+        await fetch(
+          "/api/edit-image",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body:
+              JSON.stringify({
+                image:
+                  uploadedImage,
+
+                prompt,
+
+                aspectRatio
+              })
+          }
+        );
+
+      const data =
+        await readJsonResponse(
+          response
+        );
+
+      if (
+        !response.ok ||
+        data.error
+      ) {
+
+        throw new Error(
+          data.error ||
+          "Image editing failed."
+        );
+      }
+
+      if (!data.imageUrl) {
+
+        throw new Error(
+          "No edited image was returned."
+        );
+      }
+
+      result.innerHTML = `
+        <div class="generated-result">
+
+          <img
+            src="${escapeHtml(
+              data.imageUrl
+            )}"
+            alt="${escapeHtml(
+              prompt.substring(
+                0,
+                100
+              )
+            )}"
+          />
+
+          <a
+            href="${escapeHtml(
+              data.imageUrl
+            )}"
+            download="duncanai-edited-image.png"
+            class="primary download-button"
+          >
+            ⬇ Download Edited Image
+          </a>
+
+        </div>
+      `;
+
+      await saveCreation({
+        type: "image",
+        url: data.imageUrl,
+        prompt: `Edit & Enhance: ${prompt}`,
+        aspectRatio
+      });
+
+      showSaveMessage(
+        "✓ Edited image saved to My Creations"
+      );
+
+    } catch (error) {
+
+      result.innerHTML = `
+        <div class="error">
+
+          ❌ ${escapeHtml(
+            error.message ||
+            "Something went wrong while editing the image."
+          )}
+
+        </div>
+      `;
+
+    } finally {
+
+      generateButton.disabled = false;
+      generateButton.textContent = "Generate";
+    }
+  }
+
+
+  // =========================================
   // IMAGE UPLOAD
   // =========================================
 
@@ -1863,22 +2182,9 @@ document.addEventListener("DOMContentLoaded", () => {
           "edit"
         ) {
 
-          result.innerHTML = `
-            <div class="result-placeholder">
+          await generateEditEnhance();
 
-              <strong>
-                ✨ Edit & Enhance
-              </strong>
-
-
-              <p
-                style="margin-top:8px;"
-              >
-                AI image editing is coming next.
-              </p>
-
-            </div>
-          `;
+          return;
         }
       }
     );
